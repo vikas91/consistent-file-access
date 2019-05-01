@@ -13,6 +13,9 @@ type PeerTransactionList struct {
 	TransactionMap map[string]Transaction
 }
 
-
+type PeerIPFSList struct{
+	PeerNode Peer
+	IPFSMap map[int32]IPFS
+}
 
 
