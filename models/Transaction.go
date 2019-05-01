@@ -9,7 +9,8 @@ type Transaction struct {
 	BlockId int32
 	Sender string
 	Receiver string
-	Value float32
+	Type string
 	Fee float32
+	TimeStamp int64
 	mux sync.Mutex
 }

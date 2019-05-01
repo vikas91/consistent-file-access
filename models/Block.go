@@ -18,3 +18,8 @@ type Block struct {
 	Value MerklePatriciaTrie
 	mux sync.Mutex
 }
+
+
+type BlockJSON struct{
+
+}
