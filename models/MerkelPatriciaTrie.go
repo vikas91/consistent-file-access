@@ -1,5 +1,7 @@
 package models
 
+import "sync"
+
 type Flag_value struct {
 	encoded_prefix []uint8
 	value string
@@ -14,4 +16,5 @@ type Node struct {
 type MerklePatriciaTrie struct {
 	db map[string]Node
 	root string
+	mux sync.Mutex
 }

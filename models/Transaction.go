@@ -7,9 +7,9 @@ type Transaction struct {
 	PreviousHash string
 	Status string
 	BlockId int32
-	Sender string
-	Receiver string
-	Type string
+	Sender Peer
+	Receiver Peer
+	Type string // 0: Share, 1: Seed
 	Fee float32
 	TimeStamp int64
 	mux sync.Mutex

@@ -17,7 +17,6 @@ type IPFSVersion struct {
 }
 
 type IPFSUser struct {
-	PeerId int32
-	PeerPublicKey string
-	PeerEncryptedFileKey string
+	PeerNode Peer
+	PeerFileKey string
 }
