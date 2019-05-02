@@ -11,6 +11,9 @@ type IPFSVersion struct {
 	Id int32
 	PreviousVersionHash string
 	CurrentHash string
+	SeedCost int32
+	SeedCount int32
+	SeedEnabled bool
 	VersionOwners []IPFSUser
 	VersionSeeders []IPFSUser
 	CreatedTimeStamp int64

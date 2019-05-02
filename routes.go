@@ -91,4 +91,52 @@ var routes = Routes{
 		"transactions/heartbeat/receive",
 		handlers.TransactionHeartBeatReceive,
 	},
+	Route{
+		"ShowIPFSList",
+		"GET",
+		"ipfs/",
+		handlers.ShowIPFSList,
+	},
+	Route{
+		"UpdateIPFSList",
+		"POST",
+		"ipfs/update",
+		handlers.UpdateIPFSList,
+	},
+	Route{
+		"IPFSHeartBeatReceive",
+		"POST",
+		"ipfs/heartbeat/receive",
+		handlers.IPFSHeartBeatReceive,
+	},
+	Route{
+		"ShowIPFSFile",
+		"GET",
+		"ipfs/{ipfs_id}",
+		handlers.ShowIPFSFile,
+	},
+	Route{
+		"ShowIPFSFileVersions",
+		"GET",
+		"ipfs/{ipfs_id}/versions",
+		handlers.ShowIPFSFileVersions,
+	},
+	Route{
+		"ShowIPFSSeedRequests",
+		"GET",
+		"ipfs/seeds/",
+		handlers.ShowIPFSSeedRequests,
+	},
+	Route{
+		"ShareRequestIPFSFile",
+		"POST",
+		"ipfs/{ipfs_id}/share",
+		handlers.ShareRequestIPFSFile,
+	},
+	Route{
+		"SeedRequestIPFSFile",
+		"POST",
+		"ipfs/{ipfs_id}/seed",
+		handlers.SeedRequestIPFSFile,
+	},
 }

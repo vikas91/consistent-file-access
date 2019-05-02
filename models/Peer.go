@@ -18,4 +18,8 @@ type PeerIPFSList struct{
 	IPFSMap map[int32]IPFS
 }
 
+type PeerIPFSPendingShareList struct{
+	IPFSMap map[int32]IPFS
+}
+
 
