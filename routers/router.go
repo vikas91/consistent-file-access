@@ -1,4 +1,4 @@
-package consistent_file_access
+package routers
 
 import (
 	"github.com/gorilla/mux"

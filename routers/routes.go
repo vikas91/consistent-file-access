@@ -1,4 +1,4 @@
-package consistent_file_access
+package routers
 
 import "net/http"
 import "github.com/vikas91/consistent-file-access/handlers"
