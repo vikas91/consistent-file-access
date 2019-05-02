@@ -7,3 +7,9 @@ type IPFSHeartBeat struct {
 	Addr        string `json:"addr"`
 	Hops        int32  `json:"hops"`
 }
+
+type SignedIPFSHeartBeat struct {
+	PeerNodeList []Peer
+	SignedIPFSHB string
+	Hops int32  `json:"hops"`
+}

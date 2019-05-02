@@ -9,3 +9,9 @@ type BlockHeartBeat struct {
 	Addr        string `json:"addr"`
 	Hops        int32  `json:"hops"`
 }
+
+type SignedBlockHeartBeat struct {
+	PeerNodeList []Peer
+	SignedBlockHB string
+	Hops int32  `json:"hops"`
+}

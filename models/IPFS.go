@@ -1,5 +1,7 @@
 package models
 
+const IPFS_FOLDER = "/tmp/ipfs"
+
 type IPFS struct {
 	Id int32
 	FileName string
@@ -23,3 +25,5 @@ type IPFSUser struct {
 	PeerNode Peer
 	PeerFileKey string
 }
+
+
