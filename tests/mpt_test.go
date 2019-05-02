@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"../models"
+	"github.com/vikas91/consistent-file-access/models"
 	"fmt"
 	"io/ioutil"
 	"testing"
