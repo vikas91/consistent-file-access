@@ -3,11 +3,10 @@ package handlers
 import (
 	"fmt"
 	"github.com/vikas91/consistent-file-access/models"
-	"math/rand"
+	"net"
 	"net/http"
 	"os"
 	"strconv"
-	"time"
 )
 
 const REGISTER_ADDR = "http://localhost:6686"
@@ -18,15 +17,8 @@ var blockChain models.BlockChain
 var ipfsList models.IPFSList
 var ifStarted bool
 
-func RandomSeed(){
-	rand.Seed(time.Now().UTC().UnixNano())
-}
-
-// Sleep for random time between 5 to 10seconds
-func RandomSleep(){
-	RandomSeed()
-	sleepTime := 5 + rand.Intn(5)
-	time.Sleep(time.Duration(sleepTime) * time.Second)
+func getNodeIPFSList() models.IPFSList {
+	return ipfsList
 }
 
 func init() {
@@ -47,12 +39,14 @@ func init() {
 	peerList = models.NewPeerList(selfId, 32)
 	blockChain = models.NewBlockChain()
 	ipfsList = models.NewIPFSList()
+	ipfsList.FetchPeerNodeIPFSList()
 }
 
 // This will periodically check for new files and update the IPFS list in directory
-func UpdateNodeIPFSList(ipfsList models.IPFSList){
-	RandomSleep()
-	models.UpdateNodeIPFSList(ipfsList)
+func PeriodicUpdatePeerNodeIPFSList(){
+	for ifStarted {
+		ipfsList.PollPeerNodeIPFSList()
+	}
 }
 
 // This will start the node server
@@ -60,25 +54,27 @@ func UpdateNodeIPFSList(ipfsList models.IPFSList){
 // This will run a thread to get the file in IPFS directory periodically and send IPFS heartbeat to peers
 func StartNode(w http.ResponseWriter, r *http.Request) {
 	if (!ifStarted){
+		fmt.Println("Starting Peer Node")
+		ip, port, err := net.SplitHostPort(r.Host)
+		userIP := net.ParseIP(ip)
+		fmt.Println("Ip, Port, err", ip, port, err, userIP)
 		ifStarted = true
-		SELF_ADDR = r.Host
-		fmt.Println("Host Address", SELF_ADDR)
-		// Download complete block chain from remote host
-		if(SELF_ADDR!=REGISTER_ADDR) {
-
-		}
-		for ifStarted {
-			UpdateNodeIPFSList(ipfsList)
-		}
+		go func() {
+			PeriodicUpdatePeerNodeIPFSList()
+		}()
+		fmt.Println("Started Peer Node")
 	}
 }
 
 // This will stop the peer node from generating new data
 func StopNode(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Stopping Peer Node")
 	ifStarted = false
+	fmt.Println("Stopped Peer Node")
 }
 
 // This will restart the peer node
 func RestartNode(w http.ResponseWriter, r *http.Request) {
-
+	StopNode(w , r)
+	StartNode(w, r)
 }

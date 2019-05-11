@@ -4,13 +4,13 @@ import "sync"
 
 type Header struct {
 	Height int32
-	TimeStamp int64
 	Hash string
 	ParentHash string
 	Size int32
 	Nonce string
+	RewardValue int32
+	TimeStamp int64
 }
-
 
 type Block struct {
 	BlockId int32
