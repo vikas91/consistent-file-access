@@ -1,14 +1,21 @@
 package models
 
 import (
+	"crypto"
+	"github.com/google/uuid"
 	"sync"
 )
 
 type Peer struct {
-	PeerId int32
+	PeerId uuid.UUID
 	Address string
 	Balance float32
-	PublicKey string
+	PublicKey crypto.PublicKey
+}
+
+func NewPeer(address string , publicKey crypto.PublicKey) Peer{
+	peerNode := Peer{ PeerId: uuid.New(), Address: address, PublicKey: publicKey, Balance: 0}
+	return peerNode
 }
 
 type PeerTransactionList struct {
@@ -26,15 +33,15 @@ type PeerIPFSPendingShareList struct{
 }
 
 type PeerList struct {
-	selfId int32
-	peerMap map[string]int32
+	selfId uuid.UUID
+	peerMap map[string]uuid.UUID
 	maxLength int32
 	mux sync.Mutex
 }
 
 // This will create a new peer list
-func NewPeerList(id int32, maxLength int32) PeerList {
-	peerMap := make(map[string]int32)
+func NewPeerList(id uuid.UUID, maxLength int32) PeerList {
+	peerMap := make(map[string]uuid.UUID)
 	peerList := PeerList{selfId: id, peerMap:peerMap, maxLength:maxLength}
 	return peerList
 }

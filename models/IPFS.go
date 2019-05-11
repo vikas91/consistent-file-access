@@ -133,6 +133,7 @@ func (ipfsList *IPFSList)PollPeerNodeIPFSList(){
 		mtime := fileStat.ModTime()
 		if(mtime.After(ipfsList.UpdatedTime)){
 			//TODO: Take care of new file and updated file logic here
+			// TODO: Should send new IPFS HEARTBEAT with signed signature for both scenarios
 			ipfs := NewIPFS(file)
 			fmt.Println("New IPFS File Found", ipfs.FileName, ipfs.FileVersionList, "at", ipfsList.UpdatedTime)
 			ipfsList.IPFSMap[ipfs.Id] = ipfs

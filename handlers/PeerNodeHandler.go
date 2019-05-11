@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"crypto/rsa"
 	"fmt"
 	"github.com/vikas91/consistent-file-access/models"
+	"log"
 	"net"
 	"net/http"
 	"os"
@@ -12,6 +15,7 @@ import (
 const REGISTER_ADDR = "http://localhost:6686"
 var SELF_ADDR = "http://localhost:6686"
 
+var peerNode models.Peer
 var peerList models.PeerList
 var blockChain models.BlockChain
 var ipfsList models.IPFSList
@@ -19,6 +23,45 @@ var ifStarted bool
 
 func getNodeIPFSList() models.IPFSList {
 	return ipfsList
+}
+
+func generatePeerIPAddress() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String()
+}
+
+func generatePeerKeyPair() *rsa.PrivateKey {
+	reader := rand.Reader
+	privateKey, err := rsa.GenerateKey(reader, 4096)
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+	}
+	return privateKey
+}
+
+func RegisterUser(port int32){
+	ipAddress := generatePeerIPAddress()
+	rsaPrivateKey := generatePeerKeyPair()
+	publicKey := rsaPrivateKey.PublicKey
+ 	completeAddress := ipAddress + ":" + fmt.Sprint(port)
+	peerNode = models.NewPeer(completeAddress, publicKey)
+	// TODO: Call Application Register Peer with PeerNode Json
+}
+
+func UpdatePeerNodeKeyPair(){
+	reader := rand.Reader
+	privateKey, err := rsa.GenerateKey(reader, 4096)
+	if err != nil {
+		fmt.Println("Fatal error ", err.Error())
+	}
+	publicKey := privateKey.PublicKey
+	peerNode.PublicKey = publicKey
 }
 
 func init() {
@@ -35,8 +78,8 @@ func init() {
 	} else {
 		selfId = 6686
 	}
-
-	peerList = models.NewPeerList(selfId, 32)
+	RegisterUser(selfId)
+	peerList = models.NewPeerList(peerNode.PeerId, 32)
 	blockChain = models.NewBlockChain()
 	ipfsList = models.NewIPFSList()
 	ipfsList.FetchPeerNodeIPFSList()
