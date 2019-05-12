@@ -83,7 +83,7 @@ func UpdatePeerNodeKeyPair(){
 	}
 
 	fmt.Printf("Signature: %x\n", signature)
-	//TODO: Call Application Register Peer with Peer Node Json ans signed signature
+	//TODO: Call Application Register Peer with Peer Node Json and signed signature
 
 	peerNodeRSAKey = privateKey
 	peerNode.PublicKey = privateKey.PublicKey
@@ -133,7 +133,7 @@ func StartNode(w http.ResponseWriter, r *http.Request) {
 		}()
 		fmt.Println("Started Peer Node")
 	}
-	ShowNodeDetails(w,r)
+	GetNodeDetails(w,r)
 }
 
 // This will stop the peer node from generating new data
@@ -141,7 +141,7 @@ func StopNode(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Stopping Peer Node")
 	ifStarted = false
 	fmt.Println("Stopped Peer Node")
-	ShowNodeDetails(w, r)
+	GetNodeDetails(w, r)
 }
 
 // This will restart the peer node
@@ -151,9 +151,15 @@ func RestartNode(w http.ResponseWriter, r *http.Request) {
 }
 
 // This will get the details of peer Node
-func ShowNodeDetails(w http.ResponseWriter, r *http.Request) {
+func GetNodeDetails(w http.ResponseWriter, r *http.Request) {
 	peerJSON := peerNode.GetNodeJSON()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(peerJSON))
+}
+
+// This will update the details of peer Node
+func UpdateNodeDetails(w http.ResponseWriter, r *http.Request) {
+	UpdatePeerNodeKeyPair()
+	GetNodeDetails(w, r)
 }

@@ -13,18 +13,18 @@ type Route struct {
 type Routes []Route
 
 var routes = Routes{
-	//Route{
-	//	"GetNodeDetails",
-	//	"GET",
-	//	"/",
-	//	handlers.GetNodeDetails,
-	//},
-	//Route{
-	//	"UpdateNodeDetails",
-	//	"POST",
-	//	"/",
-	//	handlers.UpdateNodeDetails,
-	//},
+	Route{
+		"GetNodeDetails",
+		"GET",
+		"/",
+		handlers.GetNodeDetails,
+	},
+	Route{
+		"UpdateNodeDetails",
+		"POST",
+		"/",
+		handlers.UpdateNodeDetails,
+	},
 	Route{
 		"StartNode",
 		"GET",
