@@ -12,8 +12,8 @@ func ShowIPFSList(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(ipfsListJSON))
 }
 
-// This will download and update the IPFS List from peer node
-func UpdateIPFSList(w http.ResponseWriter, r *http.Request) {
+// This will download and update the IPFS List from register node
+func DownloadIPFSList(w http.ResponseWriter, r *http.Request) {
 
 }
 

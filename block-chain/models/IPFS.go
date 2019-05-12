@@ -1,6 +1,8 @@
 package models
 
 import (
+	"crypto/aes"
+	"crypto/cipher"
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
@@ -8,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"io"
 	"io/ioutil"
+	random "crypto/rand"
 	"math/rand"
 	"os"
 	"path"
@@ -20,7 +23,6 @@ const IPFS_DIR = "/tmp/ipfs"
 type IPFS struct {
 	Id uuid.UUID
 	FileName string
-	Address string
 	FileVersionList []IPFSVersion
 }
 
@@ -59,6 +61,75 @@ func RandomSleep(){
 	time.Sleep(time.Duration(sleepTime) * time.Second)
 }
 
+// This will encrypt the AES File Key with peer node public key
+func EncryptAESKey(){
+
+}
+
+func createHash(key string) string {
+	hasher := md5.New()
+	hasher.Write([]byte(key))
+	return hex.EncodeToString(hasher.Sum(nil))
+}
+
+func encrypt(data []byte, passphrase string) []byte {
+	block, _ := aes.NewCipher([]byte(createHash(passphrase)))
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		panic(err.Error())
+	}
+	nonce := make([]byte, gcm.NonceSize())
+	if _, err = io.ReadFull(random.Reader, nonce); err != nil {
+		panic(err.Error())
+	}
+	ciphertext := gcm.Seal(nonce, nonce, data, nil)
+	return ciphertext
+}
+
+func decrypt(data []byte, passphrase string) []byte {
+	key := []byte(createHash(passphrase))
+	block, err := aes.NewCipher(key)
+	if err != nil {
+		panic(err.Error())
+	}
+	gcm, err := cipher.NewGCM(block)
+	if err != nil {
+		panic(err.Error())
+	}
+	nonceSize := gcm.NonceSize()
+	nonce, ciphertext := data[:nonceSize], data[nonceSize:]
+	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
+	if err != nil {
+		panic(err.Error())
+	}
+	return plaintext
+}
+
+// This will encrypt contents of file using AES encryption
+// Return AES passphrase for the file
+func AESEncryptIPFSFile(absoluteFilePath string) string{
+	data, _ := ioutil.ReadFile(absoluteFilePath)
+	aesPassword := uuid.New().String()
+	ciphertext := encrypt(data, aesPassword)
+	err := ioutil.WriteFile(absoluteFilePath, ciphertext, 0644)
+	if(err!=nil){
+		fmt.Println("unable to write to file", absoluteFilePath)
+	}
+	return aesPassword
+}
+
+
+// This will decrypt contents of file given the AES passphrase key
+func AESDecryptIPFSFile(absoluteFilePath string, aesPassword string){
+	data, _ := ioutil.ReadFile(absoluteFilePath)
+	filetext := decrypt(data, aesPassword)
+	err := ioutil.WriteFile(absoluteFilePath, filetext, 0644)
+	if(err!=nil){
+		fmt.Println("unable to write to file", absoluteFilePath)
+	}
+}
+
+
 // This will create a new ipfs entry
 func NewIPFS(file os.FileInfo) IPFS {
 	fileName := file.Name()
@@ -68,8 +139,11 @@ func NewIPFS(file os.FileInfo) IPFS {
 
 	fileHash, err := FileMD5Hash(absoluteFilePath)
 	if(err!=nil){
-
+		fmt.Printf("Unable to get MD5 hash of file", absoluteFilePath)
 	}
+	aesPassphrase := AESEncryptIPFSFile(absoluteFilePath)
+	fmt.Println(aesPassphrase)
+	//AESDecryptIPFSFile(absoluteFilePath, aesPassphrase)
 	ipfsVersion := IPFSVersion{Id: 1, PreviousVersionHash: "root", CurrentVersionHash: fileHash, CreatedTime: mtime}
 	ipfs := IPFS{Id: uuid.New(), FileName: file.Name(), FileVersionList: []IPFSVersion{ipfsVersion}}
 	return ipfs

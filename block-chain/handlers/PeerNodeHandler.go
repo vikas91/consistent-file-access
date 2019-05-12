@@ -124,9 +124,6 @@ func PeriodicUpdateNodeIPFSList(){
 func StartNode(w http.ResponseWriter, r *http.Request) {
 	if (!ifStarted){
 		fmt.Println("Starting Peer Node")
-		ip, port, err := net.SplitHostPort(r.Host)
-		userIP := net.ParseIP(ip)
-		fmt.Println("Ip, Port, err", ip, port, err, userIP)
 		ifStarted = true
 		go func() {
 			PeriodicUpdateNodeIPFSList()
@@ -144,11 +141,6 @@ func StopNode(w http.ResponseWriter, r *http.Request) {
 	GetNodeDetails(w, r)
 }
 
-// This will restart the peer node
-func RestartNode(w http.ResponseWriter, r *http.Request) {
-	StopNode(w , r)
-	StartNode(w, r)
-}
 
 // This will get the details of peer Node
 func GetNodeDetails(w http.ResponseWriter, r *http.Request) {
@@ -160,6 +152,7 @@ func GetNodeDetails(w http.ResponseWriter, r *http.Request) {
 
 // This will update the details of peer Node
 func UpdateNodeDetails(w http.ResponseWriter, r *http.Request) {
+	// TODO: This should not be publicly accesible. Need to think of better way to handle this
 	UpdatePeerNodeKeyPair()
 	GetNodeDetails(w, r)
 }

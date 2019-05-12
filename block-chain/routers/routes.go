@@ -38,12 +38,6 @@ var routes = Routes{
 		handlers.StopNode,
 	},
 	Route{
-		"RestartNode",
-		"GET",
-		"/restart",
-		handlers.RestartNode,
-	},
-	Route{
 		"ShowBlockChain",
 		"GET",
 		"/blockChain/",
@@ -112,8 +106,8 @@ var routes = Routes{
 	Route{
 		"UpdateIPFSList",
 		"POST",
-		"/ipfs/update",
-		handlers.UpdateIPFSList,
+		"/ipfs/download",
+		handlers.DownloadIPFSList,
 	},
 	Route{
 		"IPFSHeartBeatReceive",
