@@ -1,7 +1,7 @@
 package tests
 
 import (
-	"github.com/vikas91/consistent-file-access/models"
+	"github.com/vikas91/consistent-file-access/block-chain/models"
 	"fmt"
 	"io/ioutil"
 	"testing"

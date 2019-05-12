@@ -103,7 +103,7 @@ func FileMD5Hash(filePath string) (string, error) {
 
 // This is called initially when node is started
 // This will update all files present in IPFS directory to Peer IPFS List
-func (ipfsList *IPFSList)FetchPeerNodeIPFSList(){
+func (ipfsList *IPFSList)FetchNodeIPFSList(){
 	ipfsList.mux.Lock()
 	defer ipfsList.mux.Unlock()
 
@@ -121,7 +121,7 @@ func (ipfsList *IPFSList)FetchPeerNodeIPFSList(){
 
 // This will update the node ipfs list periodically
 // Checks for newly created /modified files and then creates a new entry to IPFS list
-func (ipfsList *IPFSList)PollPeerNodeIPFSList(){
+func (ipfsList *IPFSList)PollNodeIPFSList(){
 	ipfsList.mux.Lock()
 	defer ipfsList.mux.Unlock()
 	RandomSleep()
@@ -144,7 +144,7 @@ func (ipfsList *IPFSList)PollPeerNodeIPFSList(){
 }
 
 
-func (ipfsList *IPFSList)GetPeerNodeIPFSJSON() string{
+func (ipfsList *IPFSList)GetNodeIPFSJSON() string{
 	ipfsListJSON, err := json.Marshal(ipfsList)
 	if(err!=nil){
 		fmt.Println("Unable to convert peer node ipfs list to json")
@@ -153,8 +153,8 @@ func (ipfsList *IPFSList)GetPeerNodeIPFSJSON() string{
 }
 
 // This will return the IPFS List of peer as json
-func (ipfsList *IPFSList)ShowPeerNodeIPFSList() string{
+func (ipfsList *IPFSList)ShowNodeIPFSList() string{
 	ipfsList.mux.Lock()
 	defer ipfsList.mux.Unlock()
-	return ipfsList.GetPeerNodeIPFSJSON()
+	return ipfsList.GetNodeIPFSJSON()
 }

@@ -6,7 +6,7 @@ import "net/http"
 // This will show the IPFS List available at peer node
 func ShowIPFSList(w http.ResponseWriter, r *http.Request) {
 	ipfsList = getNodeIPFSList()
-	ipfsListJSON := ipfsList.ShowPeerNodeIPFSList()
+	ipfsListJSON := ipfsList.ShowNodeIPFSList()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(ipfsListJSON))

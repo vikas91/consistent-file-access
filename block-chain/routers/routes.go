@@ -1,7 +1,7 @@
 package routers
 
 import "net/http"
-import "github.com/vikas91/consistent-file-access/handlers"
+import "github.com/vikas91/consistent-file-access/block-chain/handlers"
 
 type Route struct {
 	Name        string
@@ -13,6 +13,18 @@ type Route struct {
 type Routes []Route
 
 var routes = Routes{
+	//Route{
+	//	"GetNodeDetails",
+	//	"GET",
+	//	"/",
+	//	handlers.GetNodeDetails,
+	//},
+	//Route{
+	//	"UpdateNodeDetails",
+	//	"POST",
+	//	"/",
+	//	handlers.UpdateNodeDetails,
+	//},
 	Route{
 		"StartNode",
 		"GET",

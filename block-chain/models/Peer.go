@@ -2,20 +2,35 @@ package models
 
 import (
 	"crypto"
+	"encoding/json"
+	"fmt"
 	"github.com/google/uuid"
 	"sync"
 )
 
 type Peer struct {
-	PeerId uuid.UUID
-	Address string
-	Balance float32
-	PublicKey crypto.PublicKey
+	PeerId uuid.UUID `peerId`
+	Address string `address`
+	Balance float32 `balance`
+	PublicKey crypto.PublicKey `publicKey`
+}
+
+type SignedPeer struct{
+	SignedPeerNode string
+	PeerNode Peer
 }
 
 func NewPeer(address string , publicKey crypto.PublicKey) Peer{
 	peerNode := Peer{ PeerId: uuid.New(), Address: address, PublicKey: publicKey, Balance: 0}
 	return peerNode
+}
+
+func (peerNode *Peer)GetNodeJSON() string{
+	peerNodeJSON, err := json.Marshal(peerNode)
+	if(err!=nil){
+		fmt.Println("Unable to convert peer node to json")
+	}
+	return string(peerNodeJSON)
 }
 
 type PeerTransactionList struct {

@@ -11,7 +11,7 @@ type BlockHeartBeat struct {
 }
 
 type SignedBlockHeartBeat struct {
-	PeerNodeList []Peer
 	SignedBlockHB string
+	BlockHB BlockHeartBeat `json:"blockHeartBeat"`
 	Hops int32  `json:"hops"`
 }

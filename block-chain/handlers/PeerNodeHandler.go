@@ -1,10 +1,12 @@
 package handlers
 
 import (
+	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
 	"fmt"
-	"github.com/vikas91/consistent-file-access/models"
+	"github.com/vikas91/consistent-file-access/block-chain/models"
 	"log"
 	"net"
 	"net/http"
@@ -12,8 +14,9 @@ import (
 	"strconv"
 )
 
+// This should come from config parameters
 const REGISTER_ADDR = "http://localhost:6686"
-var SELF_ADDR = "http://localhost:6686"
+var peerNodeRSAKey *rsa.PrivateKey
 
 var peerNode models.Peer
 var peerList models.PeerList
@@ -25,7 +28,8 @@ func getNodeIPFSList() models.IPFSList {
 	return ipfsList
 }
 
-func generatePeerIPAddress() string {
+// This will return the IP Address of Node
+func generateNodeIPAddress() string {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
 		log.Fatal(err)
@@ -36,37 +40,59 @@ func generatePeerIPAddress() string {
 	return localAddr.IP.String()
 }
 
-func generatePeerKeyPair() *rsa.PrivateKey {
+// This will generate an RSA key pair for the node
+func generateNodeKeyPair() *rsa.PrivateKey {
 	reader := rand.Reader
 	privateKey, err := rsa.GenerateKey(reader, 4096)
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
 	}
+	peerNodeRSAKey = privateKey
 	return privateKey
 }
 
+// This will create key pair for node and create the peer node
+// This will also register the public key of node on application
 func RegisterUser(port int32){
-	ipAddress := generatePeerIPAddress()
-	rsaPrivateKey := generatePeerKeyPair()
+	ipAddress := generateNodeIPAddress()
+	rsaPrivateKey := generateNodeKeyPair()
 	publicKey := rsaPrivateKey.PublicKey
  	completeAddress := ipAddress + ":" + fmt.Sprint(port)
 	peerNode = models.NewPeer(completeAddress, publicKey)
 	// TODO: Call Application Register Peer with PeerNode Json
 }
 
+// This will create a new key pair for node
+// This will also register the new public key of node on application
+// This will send a signed PeerNode with old private key to application to update
 func UpdatePeerNodeKeyPair(){
 	reader := rand.Reader
 	privateKey, err := rsa.GenerateKey(reader, 4096)
 	if err != nil {
 		fmt.Println("Fatal error ", err.Error())
 	}
-	publicKey := privateKey.PublicKey
-	peerNode.PublicKey = publicKey
+	oldRSAKey := peerNodeRSAKey
+	tempPeerNode := peerNode
+	tempPeerNode.PublicKey = privateKey.PublicKey
+	peerJSON := tempPeerNode.GetNodeJSON()
+	hashed := sha256.Sum256([]byte(peerJSON))
+	signature, err := rsa.SignPKCS1v15(reader, oldRSAKey, crypto.SHA256, hashed[:])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from signing: %s\n", err)
+		return
+	}
+
+	fmt.Printf("Signature: %x\n", signature)
+	//TODO: Call Application Register Peer with Peer Node Json ans signed signature
+
+	peerNodeRSAKey = privateKey
+	peerNode.PublicKey = privateKey.PublicKey
 }
 
+// This function will be executed before everything else.
+// This will be used to read config parameters to start the node
 func init() {
-	// This function will be executed before everything else.
-	// Do some initialization here.
+	// TODO: Use Config parser here to update node details
 	var selfId int32
 	if len(os.Args) > 1 {
 		i, err := strconv.ParseInt(os.Args[1], 10, 32)
@@ -82,13 +108,13 @@ func init() {
 	peerList = models.NewPeerList(peerNode.PeerId, 32)
 	blockChain = models.NewBlockChain()
 	ipfsList = models.NewIPFSList()
-	ipfsList.FetchPeerNodeIPFSList()
+	ipfsList.FetchNodeIPFSList()
 }
 
 // This will periodically check for new files and update the IPFS list in directory
-func PeriodicUpdatePeerNodeIPFSList(){
+func PeriodicUpdateNodeIPFSList(){
 	for ifStarted {
-		ipfsList.PollPeerNodeIPFSList()
+		ipfsList.PollNodeIPFSList()
 	}
 }
 
@@ -103,10 +129,11 @@ func StartNode(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Ip, Port, err", ip, port, err, userIP)
 		ifStarted = true
 		go func() {
-			PeriodicUpdatePeerNodeIPFSList()
+			PeriodicUpdateNodeIPFSList()
 		}()
 		fmt.Println("Started Peer Node")
 	}
+	ShowNodeDetails(w,r)
 }
 
 // This will stop the peer node from generating new data
@@ -114,10 +141,19 @@ func StopNode(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Stopping Peer Node")
 	ifStarted = false
 	fmt.Println("Stopped Peer Node")
+	ShowNodeDetails(w, r)
 }
 
 // This will restart the peer node
 func RestartNode(w http.ResponseWriter, r *http.Request) {
 	StopNode(w , r)
 	StartNode(w, r)
+}
+
+// This will get the details of peer Node
+func ShowNodeDetails(w http.ResponseWriter, r *http.Request) {
+	peerJSON := peerNode.GetNodeJSON()
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(peerJSON))
 }

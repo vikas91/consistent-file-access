@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/vikas91/consistent-file-access/routers"
+	"github.com/vikas91/consistent-file-access/block-chain/routers"
 	"log"
 	"net/http"
 	"os"
