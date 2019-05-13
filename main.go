@@ -2,8 +2,9 @@ package main
 
 import (
 	appRouter "github.com/vikas91/consistent-file-access/application/routers"
-	"github.com/vikas91/consistent-file-access/block-chain/handlers"
+	appHandlers "github.com/vikas91/consistent-file-access/application/handlers"
 	bcRouter "github.com/vikas91/consistent-file-access/block-chain/routers"
+	bcHandlers "github.com/vikas91/consistent-file-access/block-chain/handlers"
 	"log"
 	"net/http"
 	"os"
@@ -18,10 +19,11 @@ func init() {
 func main() {
 	//TODO: Should read config parameters and run either application server or block node
 	if len(os.Args) > 1 {
-		handlers.InitializePeerNode(os.Args)
+		bcHandlers.InitializePeerNode(os.Args)
 		router := bcRouter.NewRouter()
 		log.Fatal(http.ListenAndServe(":" + os.Args[1], router))
 	} else {
+		appHandlers.InitializeApplication()
 		router := appRouter.NewRouter()
 		log.Fatal(http.ListenAndServe(":6686", router))
 	}

@@ -6,6 +6,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/vikas91/consistent-file-access/block-chain/models"
 	"log"
 	"net"
@@ -44,8 +45,9 @@ func InitializePeerNode(args []string){
 	} else {
 		nodePort = 8000
 	}
-	Register(nodePort)
+	newPeerList := Register(nodePort)
 	peerList = models.NewPeerList(peerNode.PeerId, 32)
+	peerList.UpdatePeerList(newPeerList)
 	blockChain = models.NewBlockChain()
 	ipfsList = models.NewIPFSList()
 	ipfsList.FetchNodeIPFSList(peerNode)
@@ -74,23 +76,18 @@ func generateNodeKeyPair() *rsa.PrivateKey {
 	return privateKey
 }
 
-func updatePeerList(){
-
-}
-
-
 
 // This will create key pair for node and create the peer node
 // This will also register the public key of node on application
-func Register(port int32){
+func Register(port int32) map[uuid.UUID]models.Peer {
 	ipAddress := generateNodeIPAddress()
 	rsaPrivateKey := generateNodeKeyPair()
 	publicKey := rsaPrivateKey.PublicKey
  	completeAddress := ipAddress + ":" + fmt.Sprint(port)
 	peerNode = models.NewPeer(completeAddress, publicKey)
-	registerURL := REGISTER_ADDR + "/register/"
+	registerURL := REGISTER_ADDR + "/register"
 	newPeerList := peerNode.RegisterPeer(registerURL)
-	peerList.UpdatePeerList(newPeerList)
+	return newPeerList
 }
 
 // This will create a new key pair for node

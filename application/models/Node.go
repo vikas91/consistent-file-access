@@ -7,17 +7,17 @@ import (
 	"github.com/google/uuid"
 )
 
-type Node struct {
+type Peer struct {
 	PeerId uuid.UUID `peerId`
 	Address string `address`
 	Balance float32 `balance`
 	PublicKey rsa.PublicKey `publicKey`
 }
 
-type NodeList map[Node]uuid.UUID
+type PeerList map[uuid.UUID]Peer
 
 
-func (nodeList *NodeList)GetNodeListJSON() string{
+func (nodeList *PeerList)GetNodeListJSON() string{
 	nodeJSON, err := json.Marshal(nodeList)
 	if(err!=nil){
 		fmt.Println("Unable to convert application node list to json")
