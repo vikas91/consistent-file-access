@@ -29,19 +29,24 @@ func Index(w http.ResponseWriter, r *http.Request) {
 func RegisterNode(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Register Node called")
 	decoder := json.NewDecoder(r.Body)
-	var node models.Peer
-	err := decoder.Decode(&node)
+	var signedNode models.SignedPeer
+	err := decoder.Decode(&signedNode)
 	if err != nil {
 		fmt.Println("Unable to decode request to register node. Incorrect format")
 	}
-
-	value, ok := nodeList[node.PeerId]
-	if !ok {
-		nodeList[node.PeerId] = node
+	var nodeListJSON string
+	if(signedNode.PeerNode.VerifyPeerSignature(signedNode.SignedPeerNode)){
+		value, ok := nodeList[signedNode.PeerNode.PeerId]
+		if !ok {
+			nodeList[signedNode.PeerNode.PeerId] = signedNode.PeerNode
+		}else{
+			fmt.Println("Peer Id already registered with this uuid", value)
+		}
+		nodeListJSON = nodeList.GetNodeListJSON()
 	}else{
-		fmt.Println("Peer Id already registered with this uuid", value)
+		nodeListJSON = "{}"
 	}
-	nodeListJSON := nodeList.GetNodeListJSON()
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(nodeListJSON))

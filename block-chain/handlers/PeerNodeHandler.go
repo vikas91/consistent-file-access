@@ -17,6 +17,7 @@ import (
 
 // This should come from config parameters
 const REGISTER_ADDR = "http://localhost:6686"
+const REGISTER_URL = REGISTER_ADDR + "/register"
 var peerNodeRSAKey *rsa.PrivateKey
 
 var peerNode models.Peer
@@ -85,8 +86,7 @@ func Register(port int32) map[uuid.UUID]models.Peer {
 	publicKey := rsaPrivateKey.PublicKey
  	completeAddress := ipAddress + ":" + fmt.Sprint(port)
 	peerNode = models.NewPeer(completeAddress, publicKey)
-	registerURL := REGISTER_ADDR + "/register"
-	newPeerList := peerNode.RegisterPeer(registerURL)
+	newPeerList := peerNode.RegisterPeer(peerNodeRSAKey, REGISTER_URL)
 	return newPeerList
 }
 
@@ -154,6 +154,14 @@ func GetNodeDetails(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(peerJSON))
+}
+
+// This will get the details of peer Node
+func GetNodePeerList(w http.ResponseWriter, r *http.Request) {
+	peerListJSON := peerList.GetPeerListJSON()
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(peerListJSON))
 }
 
 // This will update the details of peer Node

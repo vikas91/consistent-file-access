@@ -20,6 +20,12 @@ var routes = Routes{
 		handlers.GetNodeDetails,
 	},
 	Route{
+		"GetNodePeerList",
+		"GET",
+		"/peers/",
+		handlers.GetNodePeerList,
+	},
+	Route{
 		"UpdateNodeDetails",
 		"POST",
 		"/",
@@ -37,6 +43,7 @@ var routes = Routes{
 		"/stop",
 		handlers.StopNode,
 	},
+
 	Route{
 		"ShowBlockChain",
 		"GET",

@@ -2,11 +2,16 @@ package models
 
 import (
 	"bytes"
+	"crypto"
+	"crypto/rand"
 	"crypto/rsa"
+	"crypto/sha256"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"net/http"
+	"os"
 	"sync"
 )
 
@@ -38,17 +43,36 @@ func (peerNode *Peer)GetNodeJSON() string{
 	return string(peerNodeJSON)
 }
 
+func (peerNode *Peer) GetSignedSignature(priv *rsa.PrivateKey, message string) string{
+	rng := rand.Reader
+	byteMessage := []byte(message)
+	hashed := sha256.Sum256(byteMessage)
+	signature, err := rsa.SignPKCS1v15(rng, priv, crypto.SHA256, hashed[:])
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Error from signing: %s\n", err)
+	}
+	sig := base64.StdEncoding.EncodeToString(signature)
+	return sig
+}
+
 // This will register peer on register server. It returns a list of peer nodes
-func(peerNode *Peer) RegisterPeer(registerURL string) map[uuid.UUID]Peer {
+func(peerNode *Peer) RegisterPeer(priv *rsa.PrivateKey , registerURL string) map[uuid.UUID]Peer {
 	peerNode.mux.Lock()
 	defer peerNode.mux.Unlock()
 
-	bytesRepresentation, err := json.Marshal(peerNode)
+	// TODO: Send signed signature for registration to prevent spam
+
+	peerJSON, err := json.Marshal(peerNode)
+	signedSignature := peerNode.GetSignedSignature(priv, string(peerJSON))
+	signedPeer := SignedPeer{SignedPeerNode: signedSignature, PeerNode: *peerNode}
+
+	signedPeerJSON, err := json.Marshal(signedPeer)
+
 	fmt.Println("Initiating connection to Register Server")
 	if err != nil {
 		fmt.Println("Unable to convert peer node to json")
 	}
-	response, err := http.Post(registerURL, "application/json", bytes.NewBuffer(bytesRepresentation))
+	response, err := http.Post(registerURL, "application/json", bytes.NewBuffer(signedPeerJSON))
 	if(err!=nil){
 		fmt.Println("Unable to connect to Register server. Service unavailable")
 		return make(map[uuid.UUID]Peer)
@@ -74,6 +98,16 @@ func NewPeerList(id uuid.UUID, maxLength int32) PeerList {
 	peerMap := make(map[uuid.UUID]Peer)
 	peerList := PeerList{selfId: id, peerMap:peerMap, maxLength:maxLength}
 	return peerList
+}
+// This will update peerNode peerMap with peerMap from register server
+func(peerList *PeerList) GetPeerListJSON() string{
+	peerList.mux.Lock()
+	defer peerList.mux.Unlock()
+	peerListJSON, err := json.Marshal(peerList)
+	if(err!=nil){
+		fmt.Println("Unable to convert peer node to json")
+	}
+	return string(peerListJSON)
 }
 
 // This will convert JSON String to peermap
