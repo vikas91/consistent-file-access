@@ -24,8 +24,31 @@ var blockChain models.BlockChain
 var ipfsList models.IPFSList
 var ifStarted bool
 
-func getNodeIPFSList() models.IPFSList {
+func GetNodeIPFSList() models.IPFSList {
 	return ipfsList
+}
+
+func GetPeerNode() models.Peer {
+	return peerNode
+}
+
+func InitializePeerNode(args []string){
+	var nodePort int32
+	if len(os.Args) > 1 {
+		i, err := strconv.ParseInt(os.Args[1], 10, 32)
+		if err != nil {
+			fmt.Println(err)
+		}
+		nodePort = int32(i)
+
+	} else {
+		nodePort = 8000
+	}
+	RegisterUser(nodePort)
+	peerList = models.NewPeerList(peerNode.PeerId, 32)
+	blockChain = models.NewBlockChain()
+	ipfsList = models.NewIPFSList()
+	ipfsList.FetchNodeIPFSList(peerNode)
 }
 
 // This will return the IP Address of Node
@@ -89,32 +112,10 @@ func UpdatePeerNodeKeyPair(){
 	peerNode.PublicKey = privateKey.PublicKey
 }
 
-// This function will be executed before everything else.
-// This will be used to read config parameters to start the node
-func init() {
-	// TODO: Use Config parser here to update node details
-	var selfId int32
-	if len(os.Args) > 1 {
-		i, err := strconv.ParseInt(os.Args[1], 10, 32)
-		if err != nil {
-			fmt.Println(err)
-		}
-		selfId = int32(i)
-
-	} else {
-		selfId = 6686
-	}
-	RegisterUser(selfId)
-	peerList = models.NewPeerList(peerNode.PeerId, 32)
-	blockChain = models.NewBlockChain()
-	ipfsList = models.NewIPFSList()
-	ipfsList.FetchNodeIPFSList()
-}
-
 // This will periodically check for new files and update the IPFS list in directory
 func PeriodicUpdateNodeIPFSList(){
 	for ifStarted {
-		ipfsList.PollNodeIPFSList()
+		ipfsList.PollNodeIPFSList(peerNode)
 	}
 }
 

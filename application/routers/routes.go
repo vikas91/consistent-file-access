@@ -1,6 +1,9 @@
 package routers
 
-import "net/http"
+import (
+	"github.com/vikas91/consistent-file-access/application/handlers"
+	"net/http"
+)
 
 type Route struct {
 	Name        string
@@ -12,5 +15,17 @@ type Route struct {
 type Routes []Route
 
 var routes = Routes{
+	Route{
+		"Index",
+		"GET",
+		"/",
+		handlers.Index,
+	},
+	Route{
+		"RegisterNode",
+		"POST",
+		"/register",
+		handlers.RegisterNode,
+	},
 
 }

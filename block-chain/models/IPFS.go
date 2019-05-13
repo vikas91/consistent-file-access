@@ -4,13 +4,15 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
+	random "crypto/rand"
+	"crypto/rsa"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"io"
 	"io/ioutil"
-	random "crypto/rand"
 	"math/rand"
 	"os"
 	"path"
@@ -62,8 +64,14 @@ func RandomSleep(){
 }
 
 // This will encrypt the AES File Key with peer node public key
-func EncryptAESKey(){
-
+func EncryptAESKey(peerNode Peer, aesFileKey string) string {
+	byteArray := []byte(aesFileKey)
+	label := []byte("aes file key")
+	encryptedText, err := rsa.EncryptOAEP(sha256.New(), random.Reader, &peerNode.PublicKey , byteArray, label)
+	if err != nil {
+		fmt.Println("Unable to encrpyt AES Key of file", aesFileKey)
+	}
+	return string(encryptedText)
 }
 
 func createHash(key string) string {
@@ -131,20 +139,24 @@ func AESDecryptIPFSFile(absoluteFilePath string, aesPassword string){
 
 
 // This will create a new ipfs entry
-func NewIPFS(file os.FileInfo) IPFS {
+// This will take filePath and peerNode as parameters
+// AES encrypt file and then get hash of encrypted file
+func NewIPFS(file os.FileInfo, peerNode Peer) IPFS {
 	fileName := file.Name()
 	absoluteFilePath := path.Join(IPFS_DIR, fileName)
 	fileStat, _ := os.Stat(absoluteFilePath)
 	mtime := fileStat.ModTime()
-
+	// TODO: This will double encrypt existing files when node restarts
+	// TODO: Should persist file encryption keys and not double encrypt it
+	aesPassphrase := AESEncryptIPFSFile(absoluteFilePath)
+	fmt.Println(aesPassphrase)
+	encryptedAESKey := EncryptAESKey(peerNode, aesPassphrase)
 	fileHash, err := FileMD5Hash(absoluteFilePath)
 	if(err!=nil){
 		fmt.Printf("Unable to get MD5 hash of file", absoluteFilePath)
 	}
-	aesPassphrase := AESEncryptIPFSFile(absoluteFilePath)
-	fmt.Println(aesPassphrase)
-	//AESDecryptIPFSFile(absoluteFilePath, aesPassphrase)
-	ipfsVersion := IPFSVersion{Id: 1, PreviousVersionHash: "root", CurrentVersionHash: fileHash, CreatedTime: mtime}
+	ipfsUser := IPFSUser{PeerNode: peerNode, PeerFileKey: encryptedAESKey}
+	ipfsVersion := IPFSVersion{Id: 1, PreviousVersionHash: "root", CurrentVersionHash: fileHash, VersionOwners: []IPFSUser{ipfsUser}, CreatedTime: mtime}
 	ipfs := IPFS{Id: uuid.New(), FileName: file.Name(), FileVersionList: []IPFSVersion{ipfsVersion}}
 	return ipfs
 }
@@ -177,7 +189,7 @@ func FileMD5Hash(filePath string) (string, error) {
 
 // This is called initially when node is started
 // This will update all files present in IPFS directory to Peer IPFS List
-func (ipfsList *IPFSList)FetchNodeIPFSList(){
+func (ipfsList *IPFSList)FetchNodeIPFSList(peerNode Peer){
 	ipfsList.mux.Lock()
 	defer ipfsList.mux.Unlock()
 
@@ -188,14 +200,14 @@ func (ipfsList *IPFSList)FetchNodeIPFSList(){
 
 	files, _ := ioutil.ReadDir(IPFS_DIR)
 	for _, file := range files {
-		ipfs := NewIPFS(file)
+		ipfs := NewIPFS(file, peerNode)
 		ipfsList.IPFSMap[ipfs.Id] = ipfs
 	}
 }
 
 // This will update the node ipfs list periodically
 // Checks for newly created /modified files and then creates a new entry to IPFS list
-func (ipfsList *IPFSList)PollNodeIPFSList(){
+func (ipfsList *IPFSList)PollNodeIPFSList(peerNode Peer){
 	ipfsList.mux.Lock()
 	defer ipfsList.mux.Unlock()
 	RandomSleep()
@@ -208,7 +220,7 @@ func (ipfsList *IPFSList)PollNodeIPFSList(){
 		if(mtime.After(ipfsList.UpdatedTime)){
 			//TODO: Take care of new file and updated file logic here
 			// TODO: Should send new IPFS HEARTBEAT with signed signature for both scenarios
-			ipfs := NewIPFS(file)
+			ipfs := NewIPFS(file, peerNode)
 			fmt.Println("New IPFS File Found", ipfs.FileName, ipfs.FileVersionList, "at", ipfsList.UpdatedTime)
 			ipfsList.IPFSMap[ipfs.Id] = ipfs
 		}

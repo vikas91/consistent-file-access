@@ -1,7 +1,7 @@
 package models
 
 import (
-	"crypto"
+	"crypto/rsa"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -12,7 +12,7 @@ type Peer struct {
 	PeerId uuid.UUID `peerId`
 	Address string `address`
 	Balance float32 `balance`
-	PublicKey crypto.PublicKey `publicKey`
+	PublicKey rsa.PublicKey `publicKey`
 }
 
 type SignedPeer struct{
@@ -20,7 +20,7 @@ type SignedPeer struct{
 	PeerNode Peer
 }
 
-func NewPeer(address string , publicKey crypto.PublicKey) Peer{
+func NewPeer(address string , publicKey rsa.PublicKey) Peer{
 	peerNode := Peer{ PeerId: uuid.New(), Address: address, PublicKey: publicKey, Balance: 0}
 	return peerNode
 }
