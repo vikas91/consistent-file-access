@@ -5,7 +5,9 @@ import (
 	"net/http"
 )
 
+// TODO: Set this from config
 const STATIC_DIR = "/Users/victor/workspace/go/src/github.com/vikas91/consistent-file-access/application/static/"
+
 
 func NewRouter() *mux.Router {
 	router := mux.NewRouter().StrictSlash(true)

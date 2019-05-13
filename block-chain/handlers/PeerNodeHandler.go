@@ -44,7 +44,7 @@ func InitializePeerNode(args []string){
 	} else {
 		nodePort = 8000
 	}
-	RegisterUser(nodePort)
+	Register(nodePort)
 	peerList = models.NewPeerList(peerNode.PeerId, 32)
 	blockChain = models.NewBlockChain()
 	ipfsList = models.NewIPFSList()
@@ -74,15 +74,23 @@ func generateNodeKeyPair() *rsa.PrivateKey {
 	return privateKey
 }
 
+func updatePeerList(){
+
+}
+
+
+
 // This will create key pair for node and create the peer node
 // This will also register the public key of node on application
-func RegisterUser(port int32){
+func Register(port int32){
 	ipAddress := generateNodeIPAddress()
 	rsaPrivateKey := generateNodeKeyPair()
 	publicKey := rsaPrivateKey.PublicKey
  	completeAddress := ipAddress + ":" + fmt.Sprint(port)
 	peerNode = models.NewPeer(completeAddress, publicKey)
-	// TODO: Call Application Register Peer with PeerNode Json
+	registerURL := REGISTER_ADDR + "/register/"
+	newPeerList := peerNode.RegisterPeer(registerURL)
+	peerList.UpdatePeerList(newPeerList)
 }
 
 // This will create a new key pair for node

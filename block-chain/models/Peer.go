@@ -13,6 +13,7 @@ type Peer struct {
 	Address string `address`
 	Balance float32 `balance`
 	PublicKey rsa.PublicKey `publicKey`
+	mux sync.Mutex
 }
 
 type SignedPeer struct{
@@ -61,4 +62,20 @@ func NewPeerList(id uuid.UUID, maxLength int32) PeerList {
 	return peerList
 }
 
+func(peerNode *Peer) RegisterPeer(registerURL string) map[string]uuid.UUID {
+	peerNode.mux.Lock()
 
+	peerNode.mux.Unlock()
+}
+
+// This will update peerNode peerMap with peerMap from register server
+func(peerList *PeerList) UpdatePeerList(peerMap map[string]uuid.UUID){
+	peerList.mux.Lock()
+	for key, _ := range peerMap {
+		value, ok := peerList.peerMap[key]
+		if !ok {
+			peerList.peerMap[key] = value
+		}
+	}
+	peerList.mux.Unlock()
+}

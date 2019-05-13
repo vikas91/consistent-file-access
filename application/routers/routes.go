@@ -27,5 +27,10 @@ var routes = Routes{
 		"/register",
 		handlers.RegisterNode,
 	},
-
+	Route{
+		"ShowNodeList",
+		"GET",
+		"/nodes",
+		handlers.ShowNodeList,
+	},
 }
