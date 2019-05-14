@@ -206,7 +206,7 @@ Responses:
 </details>
 
 <details>
-<summary>GET /ipfs/{ipfs_id}</summary>
+<summary>GET /ipfs/{ipfs_id}/</summary>
 
 Responses:
 
@@ -266,5 +266,35 @@ Responses:
 </details>
 
 # Application Layer
+
+<details>
+<summary>POST /register/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>This will register the node on the application layer. <br/>
+<pre>
+
+</pre>
+</td><td>Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /nodes/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>This will show the list of all node registered on the application layer. <br/>
+<pre>
+
+</pre>
+</td><td>Implemented</td></tr>
+</table>
+</details>
 
  

@@ -111,6 +111,12 @@ var routes = Routes{
 		handlers.ShowIPFSList,
 	},
 	Route{
+		"GetCurrentIPFSSeedList",
+		"GET",
+		"/ipfs/seeds",
+		handlers.ShowIPFSList,
+	},
+	Route{
 		"UpdateIPFSList",
 		"POST",
 		"/ipfs/download",

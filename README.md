@@ -39,3 +39,10 @@ Let say UserA/UserB who have made a ROT want to keep a back up copy of ROT. Eith
 ### File Versioning Broadcast
 Let us say UserA and UserB have access to ROT. UserB updates the file and want to broadcast the update. In order for UserB to add version 2 to IPFS list UserA has to agree that UserB has made a change to ROT. UserB creates an update file broadcast similar to create file broadcast. The update file broadcast will have new hash of file, new metadata keys of users having access 
 to version 1 of file and UserB signed signature like create file broadcast message. User A will accept the new share access and broadcast the update message. When UserB receives the update from A we add the new version hash to IPFS list which has previous version hash pointing to version 1.
+
+
+## Running Application Layer
+go run main.go (Runs application on Port 6686)
+
+## Running Node Layer
+go run main.go <port>
