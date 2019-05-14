@@ -99,6 +99,172 @@ Responses:
 </table>
 </details>
 
+<details>
+<summary>GET /ipfs/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Shows List of IPFS files information at Node.<br/>
+<pre>
+{
+    "IPFSMap": {
+        IPFSId<uuid>: {
+            Id: uuid,
+            FileName : string,
+            FileVersionList : [
+                Id: int32,
+                PreviousVersionHash: string,
+                CurrentVersionHash: string,
+                SeedCost: float32,
+                SeedCount: int32,
+                SeedEnabled: bool,
+                VersionOwners: [
+                    {
+                        "PeerId": uuid, 
+                        "Address": string, 
+                        "Balance": float32,		
+                        "PublicKey": rsa.PublicKey, 
+                    }
+                ]
+                VersionSeeds: [
+                    {
+                        "PeerId": uuid, 
+                        "Address": string, 
+                        "Balance": float32,		
+                        "PublicKey": rsa.PublicKey, 
+                    }
+                ]
+            ]
+            CreatedTime: time.Time
+        }
+    "UpdatedTime": time.Time  
+} 
+</pre></td><td>Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>POST /ipfs/download/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Should Download ipfs files from peer and update node ipfs file list. Returns list of ipfs files available at node<br/>
+<pre>
+{
+    "IPFSMap": {
+        IPFSId<uuid>: {
+            Id: uuid,
+            FileName : string,
+            FileVersionList : [
+                Id: int32,
+                PreviousVersionHash: string,
+                CurrentVersionHash: string,
+                SeedCost: float32,
+                SeedCount: int32,
+                SeedEnabled: bool,
+                VersionOwners: [
+                    {
+                        "PeerId": uuid, 
+                        "Address": string, 
+                        "Balance": float32,		
+                        "PublicKey": rsa.PublicKey, 
+                    }
+                ]
+                VersionSeeds: [
+                    {
+                        "PeerId": uuid, 
+                        "Address": string, 
+                        "Balance": float32,		
+                        "PublicKey": rsa.PublicKey, 
+                    }
+                ]
+            ]
+            CreatedTime: time.Time
+        }
+    "UpdatedTime": time.Time  
+}  
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>POST ipfs/heartbeat/receive</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>This will be new heart beat received for IPFS list. Should check for signature and then add to node ipfs list<br/>
+<pre>
+ 
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /ipfs/{ipfs_id}</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>This will retreive the IPFS file. Should retrieve file iff node is either in IPFS file owners or seeders<br/>
+<pre>
+
+</pre>
+</td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /ipfs/{ipfs_id}/versions</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>This will retreive the versions available to an IPFS entry<br/>
+<pre>
+
+</pre>
+</td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /ipfs/{ipfs_id}/versions/{version_id}/owners/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>This will show the list of owners available to a ipfs file version <br/>
+<pre>
+
+</pre>
+</td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /ipfs/{ipfs_id}/versions/{version_id}/seeds/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>This will show the list of seeds available to a ipfs file version <br/>
+<pre>
+
+</pre>
+</td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
 # Application Layer
 
  

@@ -135,21 +135,27 @@ var routes = Routes{
 		handlers.ShowIPFSFileVersions,
 	},
 	Route{
-		"ShowIPFSSeedRequests",
+		"ShowIPFSFileVersionOwners",
 		"GET",
-		"/ipfs/seeds/",
+		"/ipfs/{ipfs_id}/versions/{version_id}/owners/",
+		handlers.ShowIPFSSeedRequests,
+	},
+	Route{
+		"ShowIPFSFileVersionSeeds",
+		"GET",
+		"/ipfs/{ipfs_id}/versions/{version_id}/seeds/",
 		handlers.ShowIPFSSeedRequests,
 	},
 	Route{
 		"ShareRequestIPFSFile",
 		"POST",
-		"/ipfs/{ipfs_id}/share",
+		"/ipfs/{ipfs_id}/versions/{version_id}/share",
 		handlers.ShareRequestIPFSFile,
 	},
 	Route{
 		"SeedRequestIPFSFile",
 		"POST",
-		"/ipfs/{ipfs_id}/seed",
+		"/ipfs/{ipfs_id}/versions/{version_id}/seed",
 		handlers.SeedRequestIPFSFile,
 	},
 }
