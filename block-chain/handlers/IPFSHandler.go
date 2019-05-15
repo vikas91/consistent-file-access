@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"path/filepath"
+	"strconv"
 )
 
 const IPFS_DIR = "/tmp/ipfs"
@@ -32,13 +34,22 @@ func CreateIPFS(w http.ResponseWriter, r *http.Request) {
 	}
 	fileName := header.Filename
 	fmt.Println("FileName", header.Filename)
-	if _, err := os.Stat(path.Join(IPFS_DIR, fileName)); os.IsNotExist(err) {
-		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName), os.O_WRONLY|os.O_CREATE, 0444)
+	if _, err := os.Stat(path.Join(IPFS_DIR, fileName+"_version_1")); os.IsNotExist(err) {
+		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName+"_version_1"), os.O_WRONLY|os.O_CREATE, 0444)
 		defer f.Close()
 		io.Copy(f, file)
 	}else{
 		fmt.Println("File already exists. Incrementing version and saving file")
-		//TODO: Need to figure out way to handle versions of same file
+		// This will check for all files with version pattern and then increment the version and save it
+		pattern := path.Join(IPFS_DIR, fileName)+ "_version_*"
+		matches, err := filepath.Glob(pattern)
+		if err != nil {
+			fmt.Println("Error in matching file path", err)
+		}
+		nextVersionCount := strconv.Itoa(len(matches)+1)
+		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName+"_version_"+ nextVersionCount), os.O_WRONLY|os.O_CREATE, 0444)
+		defer f.Close()
+		io.Copy(f, file)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
