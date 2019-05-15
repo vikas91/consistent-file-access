@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha256"
+	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
 	"github.com/vikas91/consistent-file-access/block-chain/models"
@@ -32,6 +33,10 @@ func GetNodeIPFSList() models.IPFSList {
 
 func GetPeerNode() models.Peer {
 	return peerNode
+}
+
+func GetPeerNodePeerList() models.PeerList {
+	return peerList
 }
 
 func InitializePeerNode(args []string){
@@ -117,10 +122,21 @@ func UpdatePeerNodeKeyPair(){
 	peerNode.PublicKey = privateKey.PublicKey
 }
 
+func GetIPFSListJSON(ipfsList []models.IPFS) string{
+	ipfsListJSON, err := json.Marshal(ipfsList)
+	if(err!=nil){
+		fmt.Println("Unable to convert new ipfs list node to json")
+	}
+	return string(ipfsListJSON)
+}
+
 // This will periodically check for new files and update the IPFS list in directory
 func PeriodicUpdateNodeIPFSList(){
 	for ifStarted {
-		ipfsList.PollNodeIPFSList(peerNode)
+		newIPFSList := ipfsList.PollNodeIPFSList(peerNode)
+		newIPFSListJSON := GetIPFSListJSON(newIPFSList)
+		signedIPFSHeartBeat := peerNode.CreateSignedIPFSHeartBeat(peerNodeRSAKey, newIPFSListJSON)
+		peerList.BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat)
 	}
 }
 

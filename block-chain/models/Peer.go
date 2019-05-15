@@ -7,6 +7,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -53,6 +54,18 @@ func (peerNode *Peer) GetSignedSignature(priv *rsa.PrivateKey, message string) s
 	}
 	sig := base64.StdEncoding.EncodeToString(signature)
 	return sig
+}
+
+func (node *Peer)VerifyPeerSignature(signature string, message string) bool{
+	hexSignature, _ := hex.DecodeString(signature)
+	hashed := sha256.Sum256([]byte(message))
+	err := rsa.VerifyPKCS1v15(&node.PublicKey, crypto.SHA256, hashed[:], hexSignature)
+	if(err!=nil){
+		return true
+	}else{
+		fmt.Println("signature verification failed", err)
+	}
+	return false
 }
 
 // This will register peer on register server. It returns a list of peer nodes
@@ -133,6 +146,34 @@ func(peerList *PeerList) UpdatePeerList(peerMap map[uuid.UUID]Peer){
 	}
 	peerList.mux.Unlock()
 }
+
+// This will balance the peer list before broadcasting the ipfs list
+// This will send a post request to all signed ipfs list heart beat to all peers
+// If a peer node returns an error remove the peernode from list of peers
+func (peerList *PeerList) BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat SignedIPFSHeartBeat){
+	signedIPFSHeartBeatJSON := signedIPFSHeartBeat.GetSignedIPFSHeartBeatJSON()
+
+	// TODO: DO REBALANCE OF PEER LIST FIRST HERE
+	for peerId, peerNode := range peerList.peerMap {
+		// This is used to prevent the heart beat resending it back to creator of heart beat
+		if peerId != signedIPFSHeartBeat.Node.PeerId {
+			ipfsHeartBeatSendURL := "http://" + peerNode.Address + "/ipfs/receive"
+			fmt.Println("Initiating connection to Peer Server to send ipfs heart beat")
+			response, err := http.Post(ipfsHeartBeatSendURL, "application/json", bytes.NewBuffer([]byte(signedIPFSHeartBeatJSON)))
+			if(err!=nil){
+				fmt.Println("Unable to connect to peer server to share ipfs heartbeat. Service unavailable", err)
+				delete(peerList.peerMap, peerId);
+			}else{
+				fmt.Println("Connected to peer server to share ipfs heartbeat")
+				buf := new(bytes.Buffer)
+				buf.ReadFrom(response.Body)
+				peerMapJSON := buf.String()
+				fmt.Println(peerMapJSON)
+			}
+		}
+	}
+}
+
 
 type PeerTransactionList struct {
 	PeerNode Peer
