@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"github.com/vikas91/consistent-file-access/block-chain/models"
 	"io"
 	"net/http"
@@ -10,9 +11,8 @@ import (
 	"path"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
-
-const IPFS_DIR = "/tmp/ipfs"
 
 // This will show the IPFS List available at peer node
 func ShowIPFSList(w http.ResponseWriter, r *http.Request) {
@@ -89,33 +89,72 @@ func IPFSHeartBeatReceive(w http.ResponseWriter, r *http.Request) {
 }
 
 // This will request IPFS File available at node which could be either ipfs file sharers or seeders
-// If file is requested by not shared owners or seeders then return forbidden access request
-func ShowIPFSFile(w http.ResponseWriter, r *http.Request) {
+// If file is not requested by shared owners or seeders then return forbidden access request
+func GetIPFSFileVersion(w http.ResponseWriter, r *http.Request) {
+	requestUrl := r.URL.Path
+	stringList := strings.Split(requestUrl, "/")
+	for i := range stringList {
+		fmt.Println(stringList[i], i)
+	}
+	ipfsId, err := uuid.Parse(stringList[2])
+	if(err!=nil){
+		fmt.Println("Unable to parse uuid. Incorrect format", err)
+	}
+	versionId, err := strconv.Atoi(stringList[4])
+	if(err!=nil){
+		fmt.Println("Unable to parse version. Incorrect format", err)
+	}
+	ipfsList = GetNodeIPFSList()
+	peerNode = GetPeerNode()
+	peerList = GetPeerNodePeerList()
+	ipfs, err := ipfsList.GetIPFSFile(peerNode, peerList, ipfsId, versionId)
+	if(err!=nil){
+		fmt.Println(err)
+		ipfsList.DownloadIPFSList(peerList)
+		// Checking ipfs after updating the ipfs list from peers
+		ipfs, err = ipfsList.GetIPFSFile(peerNode, peerList, ipfsId, versionId)
+	}
+
+	if(err!=nil){
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusForbidden)
+		w.Write([]byte(err.Error()))
+	}else{
+		ipfsJSON := ipfs.GetIPFSJSON()
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(ipfsJSON))
+	}
+}
+
+
+// This will get the file versions available for an ipfs file
+func CreateIPFSFileVersionShareRequest(w http.ResponseWriter, r *http.Request) {
 
 }
 
 // This will request IPFS File available at node which could be either ipfs file sharers or seeders
-func ShowIPFSSeedRequestList(w http.ResponseWriter, r *http.Request) {
-
-}
-
-// This will get the file versions available for an ipfs file
-func ShowIPFSFileVersions(w http.ResponseWriter, r *http.Request) {
+func CreateIPFSFileVersionSeedRequest(w http.ResponseWriter, r *http.Request) {
 
 }
 
 // This will show the current ipfs file who request for seeds in the networks
-func ShowIPFSSeedRequests(w http.ResponseWriter, r *http.Request) {
+func ShowPendingIPFSSeedRequestsList(w http.ResponseWriter, r *http.Request) {
 
 }
 
 // This is where the share request to file will be send to for every node
-func ShareRequestIPFSFile(w http.ResponseWriter, r *http.Request) {
+func ShowIPFSFileVersions(w http.ResponseWriter, r *http.Request) {
 
 }
 
 // This is where the seed accept request to file will be send to for seeds request send in IPFS heart bear
-func SeedRequestIPFSFile(w http.ResponseWriter, r *http.Request) {
+func ShowIPFSFileVersionOwners(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// This is where the seed accept request to file will be send to for seeds request send in IPFS heart bear
+func ShowIPFSFileVersionSeeds(w http.ResponseWriter, r *http.Request) {
 
 }
 

@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/md5"
@@ -9,11 +10,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/google/uuid"
 	"io"
 	"io/ioutil"
 	"math/rand"
+	"net/http"
 	"os"
 	"path"
 	"strconv"
@@ -21,8 +24,6 @@ import (
 	"sync"
 	"time"
 )
-
-const IPFS_DIR = "/tmp/ipfs"
 
 type IPFS struct {
 	Id uuid.UUID
@@ -171,7 +172,7 @@ func versionFileNameParser(fileName string)(string, int){
 // This will take filePath and peerNode as parameters
 // AES encrypt file content and then get hash of encrypted file content
 // The hash of encrypted file content will be used by miners to verify authenticity of file data
-func NewIPFS(file os.FileInfo, peerNode Peer, ipfsList *IPFSList) IPFS {
+func NewIPFS(IPFS_DIR string, file os.FileInfo, peerNode Peer, ipfsList *IPFSList) IPFS {
 	fileName := file.Name()
 	absoluteFilePath := path.Join(IPFS_DIR, fileName)
 	fileStat, _ := os.Stat(absoluteFilePath)
@@ -219,7 +220,7 @@ func NewIPFSList() IPFSList {
 
 // This is called initially when node is started
 // This will update all files present in IPFS directory to Peer IPFS List
-func (ipfsList *IPFSList)FetchNodeIPFSList(peerNode Peer){
+func (ipfsList *IPFSList)FetchNodeIPFSList(IPFS_DIR string, peerNode Peer){
 	ipfsList.mux.Lock()
 	defer ipfsList.mux.Unlock()
 
@@ -234,7 +235,7 @@ func (ipfsList *IPFSList)FetchNodeIPFSList(peerNode Peer){
 		absoluteFilePath := path.Join(IPFS_DIR, fileName)
 		fileStat, _ := os.Stat(absoluteFilePath)
 		if(fileStat.Mode().IsRegular()){
-			ipfs := NewIPFS(file, peerNode, ipfsList)
+			ipfs := NewIPFS(IPFS_DIR, file, peerNode, ipfsList)
 			ipfsList.IPFSMap[ipfs.Id] = ipfs
 		}
 	}
@@ -242,7 +243,7 @@ func (ipfsList *IPFSList)FetchNodeIPFSList(peerNode Peer){
 
 // This will update the node ipfs list periodically
 // Checks for newly created/modified files and then creates a new entry to IPFS list
-func (ipfsList *IPFSList)PollNodeIPFSList(peerNode Peer) []IPFS{
+func (ipfsList *IPFSList)PollNodeIPFSList(IPFS_DIR string, peerNode Peer) []IPFS{
 	ipfsList.mux.Lock()
 	defer ipfsList.mux.Unlock()
 	RandomSleep()
@@ -254,7 +255,7 @@ func (ipfsList *IPFSList)PollNodeIPFSList(peerNode Peer) []IPFS{
 		fileStat, _ := os.Stat(absoluteFilePath)
 		mtime := fileStat.ModTime()
 		if(mtime.After(ipfsList.UpdatedTime) && fileStat.Mode().IsRegular()){
-			ipfs := NewIPFS(file, peerNode, ipfsList)
+			ipfs := NewIPFS(IPFS_DIR, file, peerNode, ipfsList)
 			fmt.Println("New IPFS File Found", ipfs.FileName, "at", ipfsList.UpdatedTime)
 			newIPFSList = append(newIPFSList, ipfs)
 			ipfsList.IPFSMap[ipfs.Id] = ipfs
@@ -275,9 +276,58 @@ func (ipfsList *IPFSList)SyncNodeIPFSList(ipfsListJSON string){
 		fmt.Println(err)
 	}
 	for _, newIPFS := range newIPFSList {
+		// TODO: Selectively merge ipfs list rather than overriding
 		ipfsList.IPFSMap[newIPFS.Id] = newIPFS
 	}
 }
+
+
+// This will get ipfs file available at node
+// if ipfs file is not available at node download ipfs list from all peers and sync ipfs list
+// then check if ipfs file is available at node
+// if it available check if version is available to peer node
+// if version is not available to peer node send forbidden request status code
+func (ipfsList *IPFSList)GetIPFSFile(peerNode Peer, peerList PeerList, ipfsId uuid.UUID, versionId int) (IPFS, error) {
+	var ipfsFile IPFS
+	if ipfs, ok := ipfsList.IPFSMap[ipfsId]; ok {
+		for _, version := range ipfs.FileVersionList{
+			if(version.Id==versionId){
+				for _, user :=  range version.VersionOwners {
+					if (user.PeerNode.PeerId == peerNode.PeerId){
+						return ipfs, nil
+					}
+				}
+				return ipfsFile, errors.New("This peer is not authorized to access this version")
+			}
+		}
+		return ipfsFile, errors.New("This version is not available in node ipfs list")
+	}
+	return ipfsFile, errors.New("This file is not available in node ipfs list")
+}
+
+// This will download ipfs from all peers and update node ipfs list
+func (ipfsList *IPFSList)DownloadIPFSList(peerList PeerList) {
+	for _, peerNode := range peerList.PeerMap {
+		IPFS_LIST_URL := "http://" + peerNode.Address + "/ipfs/"
+		fmt.Println("Initiating connection to Peer Server to update ipfs list at : ", IPFS_LIST_URL)
+		res, err := http.Get(IPFS_LIST_URL)
+		if (err != nil) {
+			fmt.Println("Unable to fetch peers to find block at given height with hash")
+		}else{
+			buf := new(bytes.Buffer)
+			buf.ReadFrom(res.Body)
+			blockBufferString := buf.String()
+			newIPFSList := GetNodeIPFSListFromJSON(blockBufferString)
+			ipfsList.mux.Lock()
+			for ipfsId, ipfs := range(newIPFSList.IPFSMap){
+				// TODO: Selectively merge ipfs list rather than overriding
+				ipfsList.IPFSMap[ipfsId]=ipfs
+			}
+			ipfsList.mux.Unlock()
+		}
+	}
+}
+
 
 
 // This will return the ipfs list available at node as json string
@@ -287,6 +337,17 @@ func (ipfsList *IPFSList)GetNodeIPFSJSON() string{
 		fmt.Println("Unable to convert peer node ipfs list to json")
 	}
 	return string(ipfsListJSON)
+}
+
+
+// This will return the ipfs list available at node as json string
+func GetNodeIPFSListFromJSON(ipfsListJSON string) IPFSList{
+	var ipfsList IPFSList
+	err := json.Unmarshal([]byte(ipfsListJSON), &ipfsList)
+	if (err != nil) {
+		fmt.Println("Unable to decode ipfslist json to ipfslist", err)
+	}
+	return ipfsList
 }
 
 // This will return the IPFS List of peer as json

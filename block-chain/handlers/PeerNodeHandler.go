@@ -19,6 +19,8 @@ import (
 // This should come from config parameters
 const REGISTER_ADDR = "http://localhost:6686"
 const REGISTER_URL = REGISTER_ADDR + "/register"
+const IPFS_DIR = "/tmp/ipfs"
+
 var peerNodeRSAKey *rsa.PrivateKey
 
 var peerNode models.Peer
@@ -56,7 +58,7 @@ func InitializePeerNode(args []string){
 	peerList.UpdatePeerList(newPeerList)
 	blockChain = models.NewBlockChain()
 	ipfsList = models.NewIPFSList()
-	ipfsList.FetchNodeIPFSList(peerNode)
+	ipfsList.FetchNodeIPFSList(IPFS_DIR, peerNode)
 }
 
 // This will return the IP Address of Node
@@ -133,7 +135,7 @@ func GetIPFSListJSON(ipfsList []models.IPFS) string{
 // This will periodically check for new files and update the IPFS list in directory
 func PeriodicUpdateNodeIPFSList(){
 	for ifStarted {
-		newIPFSList := ipfsList.PollNodeIPFSList(peerNode)
+		newIPFSList := ipfsList.PollNodeIPFSList(IPFS_DIR, peerNode)
 		if(len(newIPFSList)>0){
 			// Should create ipfs heart beats iff new files are discovered
 			newIPFSListJSON := GetIPFSListJSON(newIPFSList)
