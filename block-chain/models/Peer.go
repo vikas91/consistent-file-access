@@ -100,8 +100,8 @@ func(peerNode *Peer) RegisterPeer(priv *rsa.PrivateKey , registerURL string) map
 }
 
 type PeerList struct {
-	selfId uuid.UUID
-	peerMap map[uuid.UUID]Peer
+	PeerId uuid.UUID
+	PeerMap map[uuid.UUID]Peer
 	maxLength int32
 	mux sync.Mutex
 }
@@ -109,7 +109,7 @@ type PeerList struct {
 // This will create a new peer list
 func NewPeerList(id uuid.UUID, maxLength int32) PeerList {
 	peerMap := make(map[uuid.UUID]Peer)
-	peerList := PeerList{selfId: id, peerMap:peerMap, maxLength:maxLength}
+	peerList := PeerList{PeerId: id, PeerMap:peerMap, maxLength:maxLength}
 	return peerList
 }
 // This will update peerNode peerMap with peerMap from register server
@@ -134,17 +134,20 @@ func GetPeerListFromJSON(peerListJSON string)map[uuid.UUID]Peer{
 }
 
 // This will update peerNode peerMap with peerMap from register server
-func(peerList *PeerList) UpdatePeerList(peerMap map[uuid.UUID]Peer){
+func(peerList *PeerList) UpdatePeerList(newPeerMap map[uuid.UUID]Peer){
 	peerList.mux.Lock()
-	for key, _ := range peerMap {
-		if key != peerList.selfId {
-			value, ok := peerList.peerMap[key]
+	defer peerList.mux.Unlock()
+	fmt.Println("Update peer list called with peerMap")
+	for key, peer := range newPeerMap {
+		// This is to ignore peer which is same as node
+		if key != peerList.PeerId {
+			peerList.PeerMap[key] = peer
+			value, ok := peerList.PeerMap[key]
 			if !ok {
-				peerList.peerMap[key] = value
+				peerList.PeerMap[key] = value
 			}
 		}
 	}
-	peerList.mux.Unlock()
 }
 
 // This will balance the peer list before broadcasting the ipfs list
@@ -154,15 +157,17 @@ func (peerList *PeerList) BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat Signe
 	signedIPFSHeartBeatJSON := signedIPFSHeartBeat.GetSignedIPFSHeartBeatJSON()
 
 	// TODO: DO REBALANCE OF PEER LIST FIRST HERE
-	for peerId, peerNode := range peerList.peerMap {
+	for peerId, peerNode := range peerList.PeerMap {
 		// This is used to prevent the heart beat resending it back to creator of heart beat
 		if peerId != signedIPFSHeartBeat.Node.PeerId {
-			ipfsHeartBeatSendURL := "http://" + peerNode.Address + "/ipfs/receive"
-			fmt.Println("Initiating connection to Peer Server to send ipfs heart beat")
+			ipfsHeartBeatSendURL := "http://" + peerNode.Address + "/ipfs/heartbeat/receive/"
+			fmt.Println("Initiating connection to Peer Server to send ipfs heart beat", ipfsHeartBeatSendURL)
 			response, err := http.Post(ipfsHeartBeatSendURL, "application/json", bytes.NewBuffer([]byte(signedIPFSHeartBeatJSON)))
 			if(err!=nil){
 				fmt.Println("Unable to connect to peer server to share ipfs heartbeat. Service unavailable", err)
-				delete(peerList.peerMap, peerId);
+				if _, ok := peerList.PeerMap[peerId]; ok {
+					delete(peerList.PeerMap, peerId);
+				}
 			}else{
 				fmt.Println("Connected to peer server to share ipfs heartbeat")
 				buf := new(bytes.Buffer)

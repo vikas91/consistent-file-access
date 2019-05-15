@@ -134,9 +134,12 @@ func GetIPFSListJSON(ipfsList []models.IPFS) string{
 func PeriodicUpdateNodeIPFSList(){
 	for ifStarted {
 		newIPFSList := ipfsList.PollNodeIPFSList(peerNode)
-		newIPFSListJSON := GetIPFSListJSON(newIPFSList)
-		signedIPFSHeartBeat := peerNode.CreateSignedIPFSHeartBeat(peerNodeRSAKey, newIPFSListJSON)
-		peerList.BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat)
+		if(len(newIPFSList)>0){
+			// Should create ipfs heart beats iff new files are discovered
+			newIPFSListJSON := GetIPFSListJSON(newIPFSList)
+			signedIPFSHeartBeat := peerNode.CreateSignedIPFSHeartBeat(peerNodeRSAKey, newIPFSListJSON)
+			peerList.BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat)
+		}
 	}
 }
 

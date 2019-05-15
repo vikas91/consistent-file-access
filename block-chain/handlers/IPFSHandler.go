@@ -39,7 +39,7 @@ func IPFSHeartBeatReceive(w http.ResponseWriter, r *http.Request) {
 			peerList.BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat)
 		}
 	}else{
-		errorJSON := "Unable to sync ipfs heart beat data to node ipfs list"
+		errorJSON = "Unable to sync ipfs heart beat data to node ipfs list"
 	}
 
 	w.Header().Set("Content-Type", "application/json")

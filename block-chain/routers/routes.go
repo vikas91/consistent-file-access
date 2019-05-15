@@ -34,13 +34,13 @@ var routes = Routes{
 	Route{
 		"StartNode",
 		"GET",
-		"/start",
+		"/start/",
 		handlers.StartNode,
 	},
 	Route{
 		"StopNode",
 		"GET",
-		"/stop",
+		"/stop/",
 		handlers.StopNode,
 	},
 
@@ -113,31 +113,25 @@ var routes = Routes{
 	Route{
 		"GetCurrentIPFSSeedList",
 		"GET",
-		"/ipfs/seeds",
+		"/ipfs/seeds/",
 		handlers.ShowIPFSList,
-	},
-	Route{
-		"UpdateIPFSList",
-		"POST",
-		"/ipfs/download",
-		handlers.DownloadIPFSList,
 	},
 	Route{
 		"IPFSHeartBeatReceive",
 		"POST",
-		"ipfs/heartbeat/receive",
+		"/ipfs/heartbeat/receive/",
 		handlers.IPFSHeartBeatReceive,
 	},
 	Route{
 		"ShowIPFSFile",
 		"GET",
-		"/ipfs/{ipfs_id}",
+		"/ipfs/{ipfs_id}/",
 		handlers.ShowIPFSFile,
 	},
 	Route{
 		"ShowIPFSFileVersions",
 		"GET",
-		"/ipfs/{ipfs_id}/versions",
+		"/ipfs/{ipfs_id}/versions/",
 		handlers.ShowIPFSFileVersions,
 	},
 	Route{
@@ -155,13 +149,13 @@ var routes = Routes{
 	Route{
 		"ShareRequestIPFSFile",
 		"POST",
-		"/ipfs/{ipfs_id}/versions/{version_id}/share",
+		"/ipfs/{ipfs_id}/versions/{version_id}/share/",
 		handlers.ShareRequestIPFSFile,
 	},
 	Route{
 		"SeedRequestIPFSFile",
 		"POST",
-		"/ipfs/{ipfs_id}/versions/{version_id}/seed",
+		"/ipfs/{ipfs_id}/versions/{version_id}/seed/",
 		handlers.SeedRequestIPFSFile,
 	},
 }
