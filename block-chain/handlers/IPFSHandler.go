@@ -114,7 +114,6 @@ func GetIPFSFileVersion(w http.ResponseWriter, r *http.Request) {
 		// Checking ipfs after updating the ipfs list from peers
 		ipfs, err = ipfsList.GetIPFSFile(peerNode, peerList, ipfsId, versionId)
 	}
-
 	if(err!=nil){
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusForbidden)

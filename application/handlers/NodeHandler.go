@@ -35,18 +35,25 @@ func RegisterNode(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Unable to decode request to register node. Incorrect format")
 	}
 	var nodeListJSON string
-	if(signedNode.PeerNode.VerifyPeerSignature(signedNode.SignedPeerNode)){
-		value, ok := nodeList[signedNode.PeerNode.PeerId]
-		if !ok {
+	peerNode, ok := nodeList[signedNode.PeerNode.PeerId]
+	if !ok {
+		if(signedNode.PeerNode.VerifyPeerSignature(signedNode.SignedPeerNode)){
+			fmt.Println("Signature Verified for new user. Register Successful")
 			nodeList[signedNode.PeerNode.PeerId] = signedNode.PeerNode
+			nodeListJSON = nodeList.GetNodeListJSON()
 		}else{
-			fmt.Println("Peer Id already registered with this uuid", value)
+			nodeListJSON = "{}"
 		}
-		nodeListJSON = nodeList.GetNodeListJSON()
 	}else{
-		nodeListJSON = "{}"
+		fmt.Println("Peer Id already registered with this uuid.")
+		if(peerNode.VerifyPeerSignature(signedNode.SignedPeerNode)){
+			fmt.Println("Verified with old public key. Updating key pair")
+			nodeList[signedNode.PeerNode.PeerId] = signedNode.PeerNode
+			nodeListJSON = nodeList.GetNodeListJSON()
+		}else{
+			nodeListJSON = "{}"
+		}
 	}
-
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(nodeListJSON))

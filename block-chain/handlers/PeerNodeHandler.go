@@ -1,10 +1,9 @@
 package handlers
 
 import (
-	"crypto"
+	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
-	"crypto/sha256"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -110,8 +109,7 @@ func UpdatePeerNodeKeyPair(){
 	tempPeerNode := peerNode
 	tempPeerNode.PublicKey = privateKey.PublicKey
 	peerJSON := tempPeerNode.GetNodeJSON()
-	hashed := sha256.Sum256([]byte(peerJSON))
-	signature, err := rsa.SignPKCS1v15(reader, oldRSAKey, crypto.SHA256, hashed[:])
+	signature := tempPeerNode.GetSignedSignature(oldRSAKey, peerJSON)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error from signing: %s\n", err)
 		return
@@ -119,7 +117,24 @@ func UpdatePeerNodeKeyPair(){
 
 	fmt.Printf("Signature: %x\n", signature)
 	//TODO: Call Application Register Peer with Peer Node Json and signed signature
+	signedPeer := models.SignedPeer{SignedPeerNode: signature, PeerNode: tempPeerNode}
+	signedPeerJSON, err := json.Marshal(signedPeer)
 
+	fmt.Println("Initiating connection to Register Server")
+	if err != nil {
+		fmt.Println("Unable to convert peer node to json")
+	}
+	response, err := http.Post(REGISTER_URL, "application/json", bytes.NewBuffer(signedPeerJSON))
+	if(err!=nil){
+		fmt.Println("Unable to connect to Register server. Service unavailable", err)
+	}else{
+		fmt.Println("Connected to Register Server")
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(response.Body)
+		peerMapJSON := buf.String()
+		peerMap := models.GetPeerListFromJSON(peerMapJSON)
+		peerList.UpdatePeerList(peerMap)
+	}
 	peerNodeRSAKey = privateKey
 	peerNode.PublicKey = privateKey.PublicKey
 }
