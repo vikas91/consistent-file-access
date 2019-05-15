@@ -7,7 +7,8 @@ import (
 )
 
 type SignedIPFSHeartBeat struct {
-	Node Peer `json:"peer"`
+	SignedNode Peer `json:"peer"`
+	ForwardNode Peer `json:"peer"`
 	SignedIPFS string `json:"signedIPFS"`
 	IPFSListJSON string `json:"ipfsList"`
 	Hops int32  `json:"hops"`
@@ -16,7 +17,7 @@ type SignedIPFSHeartBeat struct {
 // This will create heart beat for ipfs created
 func (peerNode *Peer) CreateSignedIPFSHeartBeat(peerNodeRSAKey *rsa.PrivateKey, ipfsListJSON string) SignedIPFSHeartBeat {
 	signedSignture := peerNode.GetSignedSignature(peerNodeRSAKey, ipfsListJSON)
-	signedIPFSHeartBeat := SignedIPFSHeartBeat{Node: *peerNode, SignedIPFS: signedSignture, IPFSListJSON: ipfsListJSON, Hops: 2}
+	signedIPFSHeartBeat := SignedIPFSHeartBeat{SignedNode: *peerNode, ForwardNode: *peerNode, SignedIPFS: signedSignture, IPFSListJSON: ipfsListJSON, Hops: 2}
 	return signedIPFSHeartBeat
 }
 

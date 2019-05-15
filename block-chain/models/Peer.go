@@ -159,7 +159,7 @@ func (peerList *PeerList) BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat Signe
 	// TODO: DO REBALANCE OF PEER LIST FIRST HERE
 	for peerId, peerNode := range peerList.PeerMap {
 		// This is used to prevent the heart beat resending it back to creator of heart beat
-		if peerId != signedIPFSHeartBeat.Node.PeerId {
+		if peerId != signedIPFSHeartBeat.SignedNode.PeerId && peerId!=signedIPFSHeartBeat.ForwardNode.PeerId {
 			ipfsHeartBeatSendURL := "http://" + peerNode.Address + "/ipfs/heartbeat/receive/"
 			fmt.Println("Initiating connection to Peer Server to send ipfs heart beat", ipfsHeartBeatSendURL)
 			response, err := http.Post(ipfsHeartBeatSendURL, "application/json", bytes.NewBuffer([]byte(signedIPFSHeartBeatJSON)))

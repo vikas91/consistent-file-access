@@ -196,8 +196,13 @@ func (ipfsList *IPFSList)FetchNodeIPFSList(peerNode Peer){
 
 	files, _ := ioutil.ReadDir(IPFS_DIR)
 	for _, file := range files {
-		ipfs := NewIPFS(file, peerNode)
-		ipfsList.IPFSMap[ipfs.Id] = ipfs
+		fileName := file.Name()
+		absoluteFilePath := path.Join(IPFS_DIR, fileName)
+		fileStat, _ := os.Stat(absoluteFilePath)
+		if(fileStat.Mode().IsRegular()){
+			ipfs := NewIPFS(file, peerNode)
+			ipfsList.IPFSMap[ipfs.Id] = ipfs
+		}
 	}
 }
 
@@ -214,8 +219,7 @@ func (ipfsList *IPFSList)PollNodeIPFSList(peerNode Peer) []IPFS{
 		absoluteFilePath := path.Join(IPFS_DIR, fileName)
 		fileStat, _ := os.Stat(absoluteFilePath)
 		mtime := fileStat.ModTime()
-		if(mtime.After(ipfsList.UpdatedTime)){
-			//TODO: Take care of new file and updated file logic here
+		if(mtime.After(ipfsList.UpdatedTime) && fileStat.Mode().IsRegular()){
 			ipfs := NewIPFS(file, peerNode)
 			fmt.Println("New IPFS File Found", ipfs.FileName, "at", ipfsList.UpdatedTime)
 			newIPFSList = append(newIPFSList, ipfs)

@@ -111,10 +111,10 @@ var routes = Routes{
 		handlers.ShowIPFSList,
 	},
 	Route{
-		"GetCurrentIPFSSeedList",
-		"GET",
-		"/ipfs/seeds/",
-		handlers.ShowIPFSList,
+		"CreateIPFS",
+		"POST",
+		"/ipfs/",
+		handlers.CreateIPFS,
 	},
 	Route{
 		"IPFSHeartBeatReceive",
@@ -127,6 +127,12 @@ var routes = Routes{
 		"GET",
 		"/ipfs/{ipfs_id}/",
 		handlers.ShowIPFSFile,
+	},
+	Route{
+		"GetCurrentIPFSSeedRequestsList",
+		"GET",
+		"/ipfs/seeds/",
+		handlers.ShowIPFSSeedRequestList,
 	},
 	Route{
 		"ShowIPFSFileVersions",

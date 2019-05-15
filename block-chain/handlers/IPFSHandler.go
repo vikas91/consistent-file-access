@@ -4,9 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/vikas91/consistent-file-access/block-chain/models"
+	"io"
 	"net/http"
+	"os"
+	"path"
 )
 
+const IPFS_DIR = "/tmp/ipfs"
 
 // This will show the IPFS List available at peer node
 func ShowIPFSList(w http.ResponseWriter, r *http.Request) {
@@ -15,6 +19,30 @@ func ShowIPFSList(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(ipfsListJSON))
+}
+
+
+// This will create a file to the IPFS directory
+// This could be file added from application to block chain
+func CreateIPFS(w http.ResponseWriter, r *http.Request) {
+	file, header, err := r.FormFile("fileupload")
+	defer file.Close()
+	if err != nil {
+		fmt.Println("Create file request experienced an error", err)
+	}
+	fileName := header.Filename
+	fmt.Println("FileName", header.Filename)
+	if _, err := os.Stat(path.Join(IPFS_DIR, fileName)); os.IsNotExist(err) {
+		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName), os.O_WRONLY|os.O_CREATE, 0444)
+		defer f.Close()
+		io.Copy(f, file)
+	}else{
+		fmt.Println("File already exists. Incrementing version and saving file")
+		//TODO: Need to figure out way to handle versions of same file
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(""))
 }
 
 
@@ -29,13 +57,15 @@ func IPFSHeartBeatReceive(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Unable to decode signed heart beat request. Incorrect format", err)
 	}
 	var errorJSON string
-	if(signedIPFSHeartBeat.Node.VerifyPeerSignature(signedIPFSHeartBeat.SignedIPFS, signedIPFSHeartBeat.IPFSListJSON)){
+	if(signedIPFSHeartBeat.SignedNode.VerifyPeerSignature(signedIPFSHeartBeat.SignedIPFS, signedIPFSHeartBeat.IPFSListJSON)){
 		ipfsList = GetNodeIPFSList()
 		ipfsList.SyncNodeIPFSList(signedIPFSHeartBeat.IPFSListJSON)
 		if(signedIPFSHeartBeat.Hops>0){
 			fmt.Println("Forwarding ipfs heartbeats to all peers")
 			peerList = GetPeerNodePeerList()
+			peerNode = GetPeerNode()
 			signedIPFSHeartBeat.Hops = signedIPFSHeartBeat.Hops - 1
+			signedIPFSHeartBeat.ForwardNode = peerNode
 			peerList.BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat)
 		}
 	}else{
@@ -48,7 +78,13 @@ func IPFSHeartBeatReceive(w http.ResponseWriter, r *http.Request) {
 }
 
 // This will request IPFS File available at node which could be either ipfs file sharers or seeders
+// If file is requested by not shared owners or seeders then return forbidden access request
 func ShowIPFSFile(w http.ResponseWriter, r *http.Request) {
+
+}
+
+// This will request IPFS File available at node which could be either ipfs file sharers or seeders
+func ShowIPFSSeedRequestList(w http.ResponseWriter, r *http.Request) {
 
 }
 
