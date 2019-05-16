@@ -73,8 +73,6 @@ func(peerNode *Peer) RegisterPeer(priv *rsa.PrivateKey , registerURL string) map
 	peerNode.mux.Lock()
 	defer peerNode.mux.Unlock()
 
-	// TODO: Send signed signature for registration to prevent spam
-
 	peerJSON, err := json.Marshal(peerNode)
 	signedSignature := peerNode.GetSignedSignature(priv, string(peerJSON))
 	signedPeer := SignedPeer{SignedPeerNode: signedSignature, PeerNode: *peerNode}

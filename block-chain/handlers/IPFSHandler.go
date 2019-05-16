@@ -118,6 +118,7 @@ func GetIPFSFileVersion(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte(err.Error()))
 	}else{
 		var ipfsContent string;
+		// TODO: Should also return the file content if file is shared
 		if(ipfs.FileOwner.PeerNode.PeerId == peerNode.PeerId){
 			peerPrivateKey := GetPeerNodeKey()
 			ipfsContent = ipfs.GetUnencryptedIPFSFileContent(IPFS_DIR, peerPrivateKey, versionId)
@@ -125,7 +126,6 @@ func GetIPFSFileVersion(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Requesting ipfs file from ipfs owner")
 			ipfsContent = RequestIPFSFile(ipfs, requestUrl)
 		}
-
 		response := &models.IPFSContent{IPFSData: ipfsContent, FileName: ipfs.FileName}
 		out, _ := json.Marshal(response)
 

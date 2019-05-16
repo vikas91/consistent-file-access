@@ -187,7 +187,7 @@ Responses:
         }
     "UpdatedTime": time.Time  
 }  
-</pre></td><td>To Be Implemented</td></tr>
+</pre></td><td>Implemented</td></tr>
 </table>
 </details>
 
@@ -198,25 +198,28 @@ Responses:
 
 <table>
 	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
-	<tr><td>200</td><td>This will be new heart beat received for IPFS list. Should check for signature and then add to node ipfs list<br/>
+	<tr><td>200</td><td>This will be new heart beat received for IPFS list. Should check for signature and then add to node ipfs list. Forward Hear beat if hop count is greater than zero<br/>
 <pre>
  
-</pre></td><td>To Be Implemented</td></tr>
+</pre></td><td>Implemented</td></tr>
 </table>
 </details>
 
 <details>
-<summary>GET /ipfs/{ipfs_id}/</summary>
+<summary>GET /ipfs/{ipfs_id}/version/{version_id}/</summary>
 
 Responses:
 
 <table>
 	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
-	<tr><td>200</td><td>This will retreive the IPFS file. Should retrieve file iff node is either in IPFS file owners or seeders<br/>
+	<tr><td>200</td><td>This will retreive the IPFS file. Should retrieve file iff node is either in IPFS file owners, shared users or seeders<br/>
 <pre>
-
+{
+    "IPFSData":"this is a dummy text to test file\n",
+    "FileName":"test.txt"
+}
 </pre>
-</td><td>To Be Implemented</td></tr>
+</td><td>Implemented upto owners</td></tr>
 </table>
 </details>
 
