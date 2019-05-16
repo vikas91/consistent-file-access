@@ -43,7 +43,6 @@ var routes = Routes{
 		"/stop/",
 		handlers.StopNode,
 	},
-
 	Route{
 		"ShowBlockChain",
 		"GET",

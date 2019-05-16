@@ -100,6 +100,132 @@ Responses:
 </details>
 
 <details>
+<summary>GET /blockchain/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Shows the complete block chain.<br/>
+<pre>
+
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>POST /blockchain/</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Updates the block chain by polling blocks from peers<br/>
+<pre>
+
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /blockChain/canonical</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Shows the canonical block chain list<br/>
+<pre>
+
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /blockChain/transactions</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Shows the block chain transaction list<br/>
+<pre>
+
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /blockChain/canonical/transactions</summary>
+
+Responses:
+
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Shows the block chain canonical transaction list<br/>
+<pre>
+
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>POST /block/</summary>
+Responses:
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Requests block from peers<br/>
+<pre>
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>POST /block/heartbeat/receive</summary>
+Responses:
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Requests block heart beat from peers<br/>
+<pre>
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>GET /transactions/</summary>
+Responses:
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Get the list of transactions available at a peer<br/>
+<pre>
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>POST /transactions/</summary>
+Responses:
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Updates the list of transactions available at a peer<br/>
+<pre>
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+<details>
+<summary>POST /transactions/heartbeat/receive</summary>
+Responses:
+<table>
+	<tr><td>Code</td><td>Description</td><td>Status</td></tr>
+	<tr><td>200</td><td>Receives the transaction heart beat received from peer node.<br/>
+<pre>
+</pre></td><td>To Be Implemented</td></tr>
+</table>
+</details>
+
+# Application Layer
+<details>
 <summary>GET /ipfs/</summary>
 
 Responses:
@@ -267,8 +393,6 @@ Responses:
 </td><td>To Be Implemented</td></tr>
 </table>
 </details>
-
-# Application Layer
 
 <details>
 <summary>POST /register/</summary>
