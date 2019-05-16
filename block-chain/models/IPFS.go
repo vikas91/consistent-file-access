@@ -29,16 +29,19 @@ type IPFS struct {
 	Id uuid.UUID
 	FileName string
 	FileVersionList []IPFSVersion
+	FileOwner IPFSUser
 	mux sync.Mutex
 }
 
 type IPFSVersion struct {
 	Id int
 	VersionHash string
+	VersionCreatedBy IPFSUser
+	PendingApprovalsCount int
 	SeedCost float32
 	SeedCount int
 	SeedEnabled bool
-	VersionOwners []IPFSUser
+	VersionSharers []IPFSUser
 	VersionSeeders []IPFSUser
 	CreatedTime time.Time
 }
@@ -52,6 +55,11 @@ type IPFSList struct {
 	IPFSMap map[uuid.UUID]IPFS
 	UpdatedTime time.Time
 	mux sync.Mutex
+}
+
+type IPFSContent struct {
+	IPFSData string
+	FileName string
 }
 
 func RandomSeed(){
@@ -69,8 +77,7 @@ func RandomSleep(){
 // This will encrypt the AES File Key with peer node public key
 func EncryptAESKey(peerNode Peer, aesFileKey string) string {
 	byteArray := []byte(aesFileKey)
-	label := []byte("aes encrypt file key")
-	encryptedText, err := rsa.EncryptOAEP(sha256.New(), random.Reader, &peerNode.PublicKey , byteArray, label)
+	encryptedText, err := rsa.EncryptOAEP(sha256.New(), random.Reader, &peerNode.PublicKey , byteArray, nil)
 	if err != nil {
 		fmt.Println("Unable to encrpyt AES Key of file", aesFileKey)
 	}
@@ -80,10 +87,9 @@ func EncryptAESKey(peerNode Peer, aesFileKey string) string {
 // This will encrypt the AES File Key with peer node public key
 func DecryptAESKey(priv *rsa.PrivateKey, aesEncryptFileKey string) string {
 	byteArray := []byte(aesEncryptFileKey)
-	label := []byte("aes decrypt file key")
-	decryptedText, err := rsa.DecryptOAEP(sha256.New(), random.Reader, priv , byteArray, label)
+	decryptedText, err := rsa.DecryptOAEP(sha256.New(), random.Reader, priv , byteArray, nil)
 	if err != nil {
-		fmt.Println("Unable to encrpyt AES Key of file", aesEncryptFileKey)
+		fmt.Println("Unable to decrpyt AES Key of file", err)
 	}
 	return string(decryptedText)
 }
@@ -128,8 +134,9 @@ func decrypt(data []byte, passphrase string) []byte {
 }
 
 // This will get MD5Hash of file given absolute file path
+// First we encrypt the contents of file with AES password and then generate the hash of file
 func FileMD5Hash(aesPassword string, filePath string) string {
-	data := AESEncryptIPFSFileContent(aesPassword, filePath)
+	data := AESEncryptIPFSFileContent(filePath, aesPassword)
 	var returnMD5String string
 	hash := md5.New()
 	io.WriteString(hash, data)
@@ -140,7 +147,7 @@ func FileMD5Hash(aesPassword string, filePath string) string {
 
 // This will encrypt contents of file using AES encryption
 // Return AES passphrase for the file
-func AESEncryptIPFSFileContent(aesPassword string, absoluteFilePath string) string {
+func AESEncryptIPFSFileContent(absoluteFilePath string, aesPassword string) string {
 	data, err := ioutil.ReadFile(absoluteFilePath)
 	if(err!=nil){
 		fmt.Println("Unable to encrypt file content", err)
@@ -151,16 +158,12 @@ func AESEncryptIPFSFileContent(aesPassword string, absoluteFilePath string) stri
 
 
 // This will decrypt contents of file given the AES passphrase key
-func AESDecryptIPFSFile(absoluteFilePath string, aesPassword string){
-	data, _ := ioutil.ReadFile(absoluteFilePath)
-	filetext := decrypt(data, aesPassword)
-	err := ioutil.WriteFile(absoluteFilePath, filetext, 0644)
-	if(err!=nil){
-		fmt.Println("unable to write to file", absoluteFilePath, err)
-	}
+func AESDecryptIPFSFile(data string, aesPassword string) string{
+	filetext := decrypt([]byte(data), aesPassword)
+	return string(filetext)
 }
 
-
+// This will remove suffix substring containing version added in filename in ipfs directory
 func versionFileNameParser(fileName string)(string, int){
 	s := strings.Split(fileName, "_version_")
 	nonVersionedFileName  := s[0]
@@ -184,7 +187,7 @@ func NewIPFS(IPFS_DIR string, file os.FileInfo, peerNode Peer, ipfsList *IPFSLis
 
 	nonVersionedFileName, versionNumber := versionFileNameParser(fileName)
 	fmt.Println("FileName without version", nonVersionedFileName, versionNumber)
-	ipfsVersion := IPFSVersion{Id: versionNumber, VersionHash: fileHash, VersionOwners: []IPFSUser{ipfsUser}, CreatedTime: mtime}
+	ipfsVersion := IPFSVersion{Id: versionNumber, VersionHash: fileHash, VersionCreatedBy: ipfsUser, CreatedTime: mtime}
 	prevVersionExists := false
 	var newIPFS IPFS
 	for _, ipfs := range ipfsList.IPFSMap {
@@ -196,11 +199,12 @@ func NewIPFS(IPFS_DIR string, file os.FileInfo, peerNode Peer, ipfsList *IPFSLis
 	}
 
 	if (!prevVersionExists){
-		newIPFS = IPFS{Id: uuid.New(), FileName: nonVersionedFileName, FileVersionList: []IPFSVersion{ipfsVersion}}
+		newIPFS = IPFS{Id: uuid.New(), FileName: nonVersionedFileName, FileOwner: ipfsUser, FileVersionList: []IPFSVersion{ipfsVersion}}
 	}
 	return newIPFS
 }
 
+// Convert IPFS object to json string
 func (ipfs *IPFS)GetIPFSJSON() string{
 	ipfsJSON, err := json.Marshal(ipfs)
 	if(err!=nil){
@@ -208,7 +212,6 @@ func (ipfs *IPFS)GetIPFSJSON() string{
 	}
 	return string(ipfsJSON)
 }
-
 
 // This will create a new ipfs list
 func NewIPFSList() IPFSList {
@@ -237,6 +240,7 @@ func (ipfsList *IPFSList)FetchNodeIPFSList(IPFS_DIR string, peerNode Peer){
 		if(fileStat.Mode().IsRegular()){
 			ipfs := NewIPFS(IPFS_DIR, file, peerNode, ipfsList)
 			ipfsList.IPFSMap[ipfs.Id] = ipfs
+			//CreateTransaction(ipfs)
 		}
 	}
 }
@@ -292,17 +296,22 @@ func (ipfsList *IPFSList)GetIPFSFile(peerNode Peer, peerList PeerList, ipfsId uu
 	if ipfs, ok := ipfsList.IPFSMap[ipfsId]; ok {
 		for _, version := range ipfs.FileVersionList{
 			if(version.Id==versionId){
-				for _, user :=  range version.VersionOwners {
-					if (user.PeerNode.PeerId == peerNode.PeerId){
-						return ipfs, nil
-					}
-				}
-				return ipfsFile, errors.New("This peer is not authorized to access this version")
+				return ipfs, nil
 			}
 		}
 		return ipfsFile, errors.New("This version is not available in node ipfs list")
 	}
 	return ipfsFile, errors.New("This file is not available in node ipfs list")
+}
+
+func (ipfsList *IPFSList)GetIPFSFileContent(IPFS_DIR string, peerPrivateKey *rsa.PrivateKey, ipfs IPFS, versionId int) string {
+	ipfsUser := ipfs.FileOwner
+	aesPassword := DecryptAESKey(peerPrivateKey, ipfsUser.PeerFileKey)
+	filePath := path.Join(IPFS_DIR, ipfs.FileName + "_version_" + strconv.Itoa(versionId))
+	fmt.Println(filePath)
+	fileContent :=  AESEncryptIPFSFileContent(filePath, aesPassword)
+	fmt.Println(AESDecryptIPFSFile(fileContent, aesPassword))
+	return fileContent
 }
 
 // This will download ipfs from all peers and update node ipfs list
@@ -327,7 +336,6 @@ func (ipfsList *IPFSList)DownloadIPFSList(peerList PeerList) {
 		}
 	}
 }
-
 
 
 // This will return the ipfs list available at node as json string

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"github.com/google/uuid"
@@ -35,7 +36,7 @@ func CreateIPFS(w http.ResponseWriter, r *http.Request) {
 	fileName := header.Filename
 	fmt.Println("FileName", header.Filename)
 	if _, err := os.Stat(path.Join(IPFS_DIR, fileName+"_version_1")); os.IsNotExist(err) {
-		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName+"_version_1"), os.O_WRONLY|os.O_CREATE, 0444)
+		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName+"_version_1"), os.O_WRONLY|os.O_CREATE, 0666)
 		defer f.Close()
 		io.Copy(f, file)
 	}else{
@@ -47,7 +48,7 @@ func CreateIPFS(w http.ResponseWriter, r *http.Request) {
 			fmt.Println("Error in matching file path", err)
 		}
 		nextVersionCount := strconv.Itoa(len(matches)+1)
-		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName+"_version_"+ nextVersionCount), os.O_WRONLY|os.O_CREATE, 0444)
+		f, _ := os.OpenFile(path.Join(IPFS_DIR, fileName+"_version_"+ nextVersionCount), os.O_WRONLY|os.O_CREATE, 0666)
 		defer f.Close()
 		io.Copy(f, file)
 	}
@@ -93,9 +94,6 @@ func IPFSHeartBeatReceive(w http.ResponseWriter, r *http.Request) {
 func GetIPFSFileVersion(w http.ResponseWriter, r *http.Request) {
 	requestUrl := r.URL.Path
 	stringList := strings.Split(requestUrl, "/")
-	for i := range stringList {
-		fmt.Println(stringList[i], i)
-	}
 	ipfsId, err := uuid.Parse(stringList[2])
 	if(err!=nil){
 		fmt.Println("Unable to parse uuid. Incorrect format", err)
@@ -119,17 +117,65 @@ func GetIPFSFileVersion(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusForbidden)
 		w.Write([]byte(err.Error()))
 	}else{
-		ipfsJSON := ipfs.GetIPFSJSON()
+		var ipfsContent string;
+		if(ipfs.FileOwner.PeerNode.PeerId == peerNode.PeerId){
+			peerPrivateKey := GetPeerNodeKey()
+			ipfsContent = ipfsList.GetIPFSFileContent(IPFS_DIR, peerPrivateKey, ipfs, versionId)
+		}else{
+			fmt.Println("Requesting ipfs file from ipfs owner")
+			ipfsContent = RequestIPFSFile(ipfs, requestUrl)
+		}
+
+		response := &models.IPFSContent{IPFSData: ipfsContent, FileName: ipfs.FileName}
+		out, _ := json.Marshal(response)
+
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(ipfsJSON))
+		w.Write(out)
 	}
+}
+
+// This will send a request to peer node who is owner of ipfs file list
+func RequestIPFSFile(ipfs models.IPFS, requestUrl string) string {
+	IPFS_Read_URL := "http://" + ipfs.FileOwner.PeerNode.Address + requestUrl + "read/"
+	fmt.Println("Initiating connection to Peer Server to read ipfs file at : ", IPFS_Read_URL)
+	res, err := http.Get(IPFS_Read_URL)
+	if (err != nil) {
+		fmt.Println("Unable to fetch peer to read ipfs file", err)
+	}else{
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(res.Body)
+		blockBufferString := buf.String()
+		return blockBufferString
+	}
+	return err.Error()
+}
+
+// This will return the ipfs file version available at the current node
+func ReadIPFSFileVersion(w http.ResponseWriter, r *http.Request){
+	requestUrl := r.URL.Path
+	stringList := strings.Split(requestUrl, "/")
+	ipfsId, err := uuid.Parse(stringList[2])
+	if(err!=nil){
+		fmt.Println("Unable to parse uuid. Incorrect format", err)
+	}
+	versionId, err := strconv.Atoi(stringList[4])
+	if(err!=nil){
+		fmt.Println("Unable to parse version. Incorrect format", err)
+	}
+	peerPrivateKey := GetPeerNodeKey()
+	ipfsList = GetNodeIPFSList()
+	ipfs := ipfsList.IPFSMap[ipfsId]
+	ipfsContent := ipfsList.GetIPFSFileContent(IPFS_DIR, peerPrivateKey, ipfs, versionId)
+	w.Header().Set("Content-Type", "application/text")
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(ipfsContent))
 }
 
 
 // This will get the file versions available for an ipfs file
 func CreateIPFSFileVersionShareRequest(w http.ResponseWriter, r *http.Request) {
-
+	
 }
 
 // This will request IPFS File available at node which could be either ipfs file sharers or seeders

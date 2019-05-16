@@ -1,12 +1,9 @@
 package models
 
-type TransactionHeartBeat struct {
-	TransactionId int32  `json:"transactionId"`
-	TransactionJson string `json:"transactionJson"`
-}
-
 type SignedTransactionHeartBeat struct {
-	PeerNodeList []Peer
-	SignedTransactionHB string
+	SignedNode Peer `json:"peer"`
+	ForwardNode Peer `json:"peer"`
+	SignedTransaction string `json:"signedTransaction"`
+	Transaction string `json:"transaction"`
 	Hops int32  `json:"hops"`
 }

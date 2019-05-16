@@ -183,11 +183,13 @@ func (peerList *PeerList) BroadcastSignedIPFSHeartBeat(signedIPFSHeartBeat Signe
 type PeerTransactionList struct {
 	PeerNode Peer
 	TransactionMap map[string]Transaction
+	mux sync.Mutex
 }
 
 type PeerIPFSList struct{
 	PeerNode Peer
 	IPFSMap map[int32]IPFS
+	mux sync.Mutex
 }
 
 type PeerIPFSPendingShareList struct{

@@ -40,6 +40,10 @@ func GetPeerNodePeerList() models.PeerList {
 	return peerList
 }
 
+func GetPeerNodeKey() *rsa.PrivateKey{
+	return peerNodeRSAKey
+}
+
 func InitializePeerNode(args []string){
 	var nodePort int32
 	if len(os.Args) > 1 {

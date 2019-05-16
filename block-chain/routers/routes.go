@@ -129,6 +129,12 @@ var routes = Routes{
 		handlers.GetIPFSFileVersion,
 	},
 	Route{
+		"ReadIPFSFileVersion",
+		"GET",
+		"/ipfs/{ipfs_id}/version/{version_id}/read/",
+		handlers.ReadIPFSFileVersion,
+	},
+	Route{
 		"CreateIPFSFileVersionShareRequest",
 		"POST",
 		"/ipfs/{ipfs_id}/version/{version_id}/share/",
