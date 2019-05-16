@@ -120,7 +120,7 @@ func GetIPFSFileVersion(w http.ResponseWriter, r *http.Request) {
 		var ipfsContent string;
 		if(ipfs.FileOwner.PeerNode.PeerId == peerNode.PeerId){
 			peerPrivateKey := GetPeerNodeKey()
-			ipfsContent = ipfsList.GetIPFSFileContent(IPFS_DIR, peerPrivateKey, ipfs, versionId)
+			ipfsContent = ipfs.GetUnencryptedIPFSFileContent(IPFS_DIR, peerPrivateKey, versionId)
 		}else{
 			fmt.Println("Requesting ipfs file from ipfs owner")
 			ipfsContent = RequestIPFSFile(ipfs, requestUrl)
@@ -166,7 +166,7 @@ func ReadIPFSFileVersion(w http.ResponseWriter, r *http.Request){
 	peerPrivateKey := GetPeerNodeKey()
 	ipfsList = GetNodeIPFSList()
 	ipfs := ipfsList.IPFSMap[ipfsId]
-	ipfsContent := ipfsList.GetIPFSFileContent(IPFS_DIR, peerPrivateKey, ipfs, versionId)
+	ipfsContent := ipfs.GetIPFSFileContent(IPFS_DIR, peerPrivateKey, versionId)
 	w.Header().Set("Content-Type", "application/text")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(ipfsContent))
@@ -175,7 +175,7 @@ func ReadIPFSFileVersion(w http.ResponseWriter, r *http.Request){
 
 // This will get the file versions available for an ipfs file
 func CreateIPFSFileVersionShareRequest(w http.ResponseWriter, r *http.Request) {
-	
+
 }
 
 // This will request IPFS File available at node which could be either ipfs file sharers or seeders

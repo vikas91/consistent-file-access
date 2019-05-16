@@ -304,7 +304,13 @@ func (ipfsList *IPFSList)GetIPFSFile(peerNode Peer, peerList PeerList, ipfsId uu
 	return ipfsFile, errors.New("This file is not available in node ipfs list")
 }
 
-func (ipfsList *IPFSList)GetIPFSFileContent(IPFS_DIR string, peerPrivateKey *rsa.PrivateKey, ipfs IPFS, versionId int) string {
+func (ipfs *IPFS)GetUnencryptedIPFSFileContent(IPFS_DIR string, peerPrivateKey *rsa.PrivateKey, versionId int) string {
+	filePath := path.Join(IPFS_DIR, ipfs.FileName + "_version_" + strconv.Itoa(versionId))
+	fileContent, _ :=  ioutil.ReadFile(filePath)
+	return string(fileContent)
+}
+
+func (ipfs *IPFS)GetIPFSFileContent(IPFS_DIR string, peerPrivateKey *rsa.PrivateKey, versionId int) string {
 	ipfsUser := ipfs.FileOwner
 	aesPassword := DecryptAESKey(peerPrivateKey, ipfsUser.PeerFileKey)
 	filePath := path.Join(IPFS_DIR, ipfs.FileName + "_version_" + strconv.Itoa(versionId))
